@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { supabase } from '../../lib/supabase'
+import { playClick } from '../../utils/sounds'
 import type { FinalScore } from '../../types/game'
+import mainMenuDesktopBg from '../../assets/main_menu_desktop.webp'
+import mobileBg from '../../assets/main_menu_bg.webp'
 
 export default function ResultsPage() {
   const navigate = useNavigate()
@@ -73,6 +76,7 @@ export default function ResultsPage() {
   }, [roomCode, finalScores, setFinalScores])
 
   function handleLobbyRedirect() {
+    playClick()
     resetStore()
     navigate('/')
   }
@@ -108,109 +112,174 @@ export default function ResultsPage() {
   const runnerUps = localScores.slice(3)
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Background radial effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full filter blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-72 h-72 bg-violet-600/10 rounded-full filter blur-[100px] pointer-events-none" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-950 text-white flex flex-col items-center justify-start px-4 py-8 md:py-12">
+      {/* --- Backgrounds --- */}
+      <div
+        className="hidden md:block absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80"
+        style={{ backgroundImage: `url(${mainMenuDesktopBg})` }}
+      />
+      <div
+        className="md:hidden absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80"
+        style={{ backgroundImage: `url(${mobileBg})` }}
+      />
+      <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none" />
 
-      {/* Title */}
-      <div className="text-center mb-10 z-10">
-        <p className="text-xs text-slate-400 uppercase tracking-[0.2em] font-semibold mb-2">
-          Kallanum Policeum
-        </p>
-        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
-          Final Results
-        </h1>
-        {roomCode && (
-          <p className="text-xs text-slate-500 mt-1 font-mono">
-            Room Code: {roomCode.toUpperCase()}
+      {/* --- Layout Wrapper --- */}
+      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center">
+        {/* Title */}
+        <div className="text-center mb-10">
+          <p className="text-xs text-[#c89f59] uppercase tracking-[0.25em] font-serif font-black mb-2 drop-shadow-md">
+            Kallanum Policeum
           </p>
-        )}
-      </div>
-
-      {/* Podium section for Top 3 */}
-      {localScores.length > 0 && (
-        <div className="w-full max-w-lg flex items-end justify-center gap-2 mb-10 z-10 min-h-[260px] px-2">
-          {/* 2nd Place */}
-          {secondPlace ? (
-            <div className="flex-1 flex flex-col items-center group">
-              <div className="mb-2 text-center">
-                <span className="text-2xl">🥈</span>
-                <p className="text-sm font-semibold text-slate-300 truncate max-w-[100px]" title={secondPlace.username}>
-                  {secondPlace.username}
-                </p>
-                <p className="text-xs font-mono text-slate-400">{secondPlace.totalScore} pts</p>
-              </div>
-              <div className="w-full bg-slate-900 border border-slate-700/50 rounded-t-2xl flex items-center justify-center h-28 shadow-lg transition-transform group-hover:-translate-y-1 duration-300">
-                <span className="text-3xl font-black text-slate-500">2</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 h-0" />
-          )}
-
-          {/* 1st Place (Winner) */}
-          {firstPlace && (
-            <div className="flex-1 flex flex-col items-center group">
-              <div className="mb-2 text-center scale-110">
-                <span className="text-3xl block animate-bounce duration-1000">👑</span>
-                <p className="text-base font-bold text-amber-300 truncate max-w-[120px]" title={firstPlace.username}>
-                  {firstPlace.username}
-                </p>
-                <p className="text-xs font-mono text-amber-400/90 font-semibold">{firstPlace.totalScore} pts</p>
-              </div>
-              <div className="w-full bg-gradient-to-b from-amber-400/20 to-amber-950/40 border border-amber-400/40 rounded-t-2xl flex items-center justify-center h-36 shadow-[0_0_30px_rgba(251,191,36,0.15)] transition-transform group-hover:-translate-y-1 duration-300">
-                <span className="text-4xl font-black text-amber-400">1</span>
-              </div>
-            </div>
-          )}
-
-          {/* 3rd Place */}
-          {thirdPlace ? (
-            <div className="flex-1 flex flex-col items-center group">
-              <div className="mb-2 text-center">
-                <span className="text-2xl">🥉</span>
-                <p className="text-sm font-semibold text-amber-700 truncate max-w-[100px]" title={thirdPlace.username}>
-                  {thirdPlace.username}
-                </p>
-                <p className="text-xs font-mono text-slate-400">{thirdPlace.totalScore} pts</p>
-              </div>
-              <div className="w-full bg-slate-900 border border-slate-800 rounded-t-2xl flex items-center justify-center h-20 shadow-md transition-transform group-hover:-translate-y-1 duration-300">
-                <span className="text-2xl font-black text-amber-700">3</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 h-0" />
+          <h1 className="text-4xl sm:text-5xl font-serif font-black uppercase tracking-widest" style={{
+            background: 'linear-gradient(180deg, #ffe58f 0%, #d4af37 40%, #b8860b 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
+          }}>
+            Final Results
+          </h1>
+          {roomCode && (
+            <p className="text-xs text-amber-500/80 mt-2 font-mono tracking-widest uppercase">
+              Room Code: {roomCode}
+            </p>
           )}
         </div>
-      )}
 
-      {/* Runner ups and full list */}
-      {runnerUps.length > 0 && (
-        <div className="w-full max-w-sm mb-10 z-10">
-          <p className="text-xs text-slate-500 uppercase tracking-widest mb-3">Other Standings</p>
-          <div className="space-y-2">
-            {runnerUps.map((player) => (
-              <div key={player.playerId} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 w-5">#{player.rank}</span>
-                  <span className="text-slate-300 font-medium">{player.username}</span>
-                </div>
-                <span className="font-mono font-semibold text-slate-400">{player.totalScore} pts</span>
-              </div>
-            ))}
+        {/* Podium section for Top 3 */}
+        {localScores.length > 0 && (
+          <div className="w-full flex flex-col sm:flex-row items-end justify-center gap-3 sm:gap-4 mb-10 min-h-[220px] sm:min-h-[260px] px-2">
+            
+            {/* 2nd Place */}
+            <div className="order-2 sm:order-1 flex-1 flex flex-col items-center group w-full sm:w-auto mt-4 sm:mt-0">
+              {secondPlace ? (
+                <>
+                  <div className="mb-2 text-center w-full px-2">
+                    <span className="text-2xl sm:text-3xl drop-shadow-lg">🥈</span>
+                    <p className="text-sm font-serif font-bold text-slate-300 truncate w-full" title={secondPlace.username}>
+                      {secondPlace.username}
+                    </p>
+                    <p className="text-xs font-mono text-[#c89f59]">{secondPlace.totalScore} pts</p>
+                  </div>
+                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-16 sm:h-28 transition-transform group-hover:-translate-y-1 duration-300" style={{
+                    background: 'linear-gradient(180deg, #334155, #0f172a)',
+                    border: '2px solid #64748b',
+                    borderBottom: 'none',
+                    boxShadow: 'inset 0 4px 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.6)'
+                  }}>
+                    <span className="text-3xl sm:text-4xl font-serif font-black text-slate-400 opacity-80">2</span>
+                  </div>
+                </>
+              ) : (
+                <div className="h-0 w-full" />
+              )}
+            </div>
+
+            {/* 1st Place (Winner) */}
+            <div className="order-1 sm:order-2 flex-1 flex flex-col items-center group w-full sm:w-auto">
+              {firstPlace ? (
+                <>
+                  <div className="mb-2 text-center scale-110 w-full px-2">
+                    <span className="text-4xl block drop-shadow-[0_0_15px_rgba(255,215,0,0.5)] mb-1">👑</span>
+                    <p className="text-base font-serif font-black text-amber-300 truncate w-full" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }} title={firstPlace.username}>
+                      {firstPlace.username}
+                    </p>
+                    <p className="text-sm font-mono text-amber-400 font-bold">{firstPlace.totalScore} pts</p>
+                  </div>
+                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-20 sm:h-36 transition-transform group-hover:-translate-y-1 duration-300 relative overflow-hidden" style={{
+                    background: 'linear-gradient(180deg, #d4af37, #8a6b20)',
+                    border: '2px solid #ffe58f',
+                    borderBottom: 'none',
+                    boxShadow: 'inset 0 4px 15px rgba(255,255,255,0.3), 0 0 30px rgba(212,175,55,0.3), 0 10px 20px rgba(0,0,0,0.8)'
+                  }}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <span className="text-4xl sm:text-5xl font-serif font-black text-[#fff8e1] relative z-10" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.6)' }}>1</span>
+                  </div>
+                </>
+              ) : (
+                <div className="h-0 w-full" />
+              )}
+            </div>
+
+            {/* 3rd Place */}
+            <div className="order-3 flex-1 flex flex-col items-center group w-full sm:w-auto mt-4 sm:mt-0">
+              {thirdPlace ? (
+                <>
+                  <div className="mb-2 text-center w-full px-2">
+                    <span className="text-2xl sm:text-3xl drop-shadow-lg">🥉</span>
+                    <p className="text-sm font-serif font-bold text-orange-400 truncate w-full" title={thirdPlace.username}>
+                      {thirdPlace.username}
+                    </p>
+                    <p className="text-xs font-mono text-[#c89f59]">{thirdPlace.totalScore} pts</p>
+                  </div>
+                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-12 sm:h-20 transition-transform group-hover:-translate-y-1 duration-300" style={{
+                    background: 'linear-gradient(180deg, #9a5f2a, #4a2810)',
+                    border: '2px solid #b87333',
+                    borderBottom: 'none',
+                    boxShadow: 'inset 0 4px 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.6)'
+                  }}>
+                    <span className="text-2xl sm:text-3xl font-serif font-black text-orange-300/80">3</span>
+                  </div>
+                </>
+              ) : (
+                <div className="h-0 w-full" />
+              )}
+            </div>
+            
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Back button */}
-      <div className="w-full max-w-sm z-10">
-        <button
-          onClick={handleLobbyRedirect}
-          className="w-full py-3.5 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-amber-500/10"
-        >
-          Return to Lobby
-        </button>
+        {/* Runner ups */}
+        {runnerUps.length > 0 && (
+          <div className="w-full mb-10">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#c89f59]/50" />
+              <p className="text-xs font-serif font-bold text-[#c89f59] uppercase tracking-[0.2em] whitespace-nowrap">Other Standings</p>
+              <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#c89f59]/50" />
+            </div>
+            <div className="space-y-3">
+              {runnerUps.map((player) => (
+                <div key={player.playerId} className="flex items-center justify-between px-5 py-3 rounded-xl transition-all" style={{
+                  background: 'linear-gradient(180deg, rgba(20,12,7,0.8) 0%, rgba(10,6,3,0.9) 100%)',
+                  border: '1px solid rgba(200,159,89,0.3)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                }}>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-serif font-black text-[#c89f59] w-6 opacity-60">#{player.rank}</span>
+                    <span className="text-[15px] font-serif font-bold text-white/90">{player.username}</span>
+                  </div>
+                  <span className="font-mono font-bold text-amber-500">{player.totalScore} pts</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action Button */}
+        <div className="w-full mt-4">
+          <button
+            onClick={handleLobbyRedirect}
+            className="w-full relative group rounded-xl p-[2px] transition-all duration-150 active:scale-[0.98] focus:outline-none"
+            style={{
+              background: 'linear-gradient(180deg, #ffe58f, #a67c00)',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.8)'
+            }}
+          >
+            <div className="w-full py-4 rounded-[10px] flex items-center justify-center transition-all group-hover:brightness-110" style={{
+              background: 'linear-gradient(180deg, #c9a033 0%, #9a7220 40%, #7a5a18 100%)',
+              boxShadow: 'inset 0 1px 1px rgba(255,229,143,0.5), inset 0 -2px 4px rgba(0,0,0,0.4)'
+            }}>
+              <span className="font-serif font-black text-lg tracking-[0.15em] uppercase" style={{
+                background: 'linear-gradient(180deg, #fff8e1 0%, #ffe58f 50%, #d4af37 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))'
+              }}>
+                Return to Main Menu
+              </span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   )
