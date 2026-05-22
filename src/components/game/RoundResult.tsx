@@ -4,8 +4,8 @@ import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { playWin, playLose } from '../../utils/sounds'
 import { supabase } from '../../lib/supabase'
-import mainGameMobile from '../../assets/main_game.png'
-import mainGameDesktop from '../../assets/main_game_desktop.png'
+import mainGameMobile from '../../assets/main_game.webp'
+import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
 export default function RoundResult() {
   const room = useGameStore((s) => s.room)

@@ -3,8 +3,8 @@ import type { Player } from '../../types/game'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { useGameStore } from '../../stores/gameStore'
-import mainGameMobile from '../../assets/main_game.png'
-import mainGameDesktop from '../../assets/main_game_desktop.png'
+import mainGameMobile from '../../assets/main_game.webp'
+import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
 interface GameTableLayoutProps {
   players: Player[]

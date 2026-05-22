@@ -1,9 +1,9 @@
-import male1 from '../assets/avatar/male1.png'
-import male2 from '../assets/avatar/male2.png'
-import male3 from '../assets/avatar/male3.png'
-import female1 from '../assets/avatar/female1.png'
-import female2 from '../assets/avatar/female2.png'
-import female3 from '../assets/avatar/female3.png'
+import male1 from '../assets/avatar/male1.webp'
+import male2 from '../assets/avatar/male2.webp'
+import male3 from '../assets/avatar/male3.webp'
+import female1 from '../assets/avatar/female1.webp'
+import female2 from '../assets/avatar/female2.webp'
+import female3 from '../assets/avatar/female3.webp'
 
 /**
  * Maps avatar keys (stored in DB) to their Vite-resolved image URLs.

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import signupBg from '../../assets/signup_bg.png'
-import signupBgDesktop from '../../assets/signup_bg_desktop.png'
-import typoLogo from '../../assets/typo_logo.png'
+import signupBg from '../../assets/signup_bg.webp'
+import signupBgDesktop from '../../assets/signup_bg_desktop.webp'
+import typoLogo from '../../assets/typo_logo.webp'
 
 export default function SignUpPage() {
   const navigate = useNavigate()

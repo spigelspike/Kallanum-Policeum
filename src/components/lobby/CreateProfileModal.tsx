@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { useProfileStore } from '../../stores/profileStore'
 import { avatarUrlToKey } from '../../utils/avatarMap'
 import { playClick } from '../../utils/sounds'
-import male1 from '../../assets/avatar/male1.png'
-import male2 from '../../assets/avatar/male2.png'
-import male3 from '../../assets/avatar/male3.png'
-import female1 from '../../assets/avatar/female1.png'
-import female2 from '../../assets/avatar/female2.png'
-import female3 from '../../assets/avatar/female3.png'
+import male1 from '../../assets/avatar/male1.webp'
+import male2 from '../../assets/avatar/male2.webp'
+import male3 from '../../assets/avatar/male3.webp'
+import female1 from '../../assets/avatar/female1.webp'
+import female2 from '../../assets/avatar/female2.webp'
+import female3 from '../../assets/avatar/female3.webp'
 
 const AVATARS = {
   male: [male1, male2, male3],

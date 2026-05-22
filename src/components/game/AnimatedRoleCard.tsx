@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { playFlip, playReveal } from '../../utils/sounds'
-import coverCardImg from '../../assets/cover_card.png'
-import revealCardImg from '../../assets/reveal_card.png'
+import coverCardImg from '../../assets/cover_card.webp'
+import revealCardImg from '../../assets/reveal_card.webp'
 
 interface AnimatedRoleCardProps {
   role: string

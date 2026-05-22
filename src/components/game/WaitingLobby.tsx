@@ -5,8 +5,8 @@ import { useSoundStore } from '../../stores/soundStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { playClick } from '../../utils/sounds'
 import { supabase } from '../../lib/supabase'
-import lobbyBgMobile from '../../assets/lobby.png'
-import lobbyBgDesktop from '../../assets/lobby_desktop.png'
+import lobbyBgMobile from '../../assets/lobby.webp'
+import lobbyBgDesktop from '../../assets/lobby_desktop.webp'
 import bgMusic from '../../assets/sound/game_bg.mp3'
 
 export default function WaitingLobby() {
