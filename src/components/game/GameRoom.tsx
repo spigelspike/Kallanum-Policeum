@@ -16,7 +16,7 @@ export default function GameRoom() {
 
 
   // Connect to realtime channel
-  const { connected } = useRealtimeRoom({
+  const { connected, status } = useRealtimeRoom({
     roomId: room?.id ?? '',
     roomCode: code ?? '',
   })
@@ -48,7 +48,7 @@ export default function GameRoom() {
             connected ? 'bg-emerald-400' : 'bg-red-400'
           }`}
         />
-        {connected ? 'Connected' : 'Reconnecting...'}
+        {connected ? 'Connected' : `Reconnecting... (${status})`}
       </div>
 
       {/* Phase rendering */}

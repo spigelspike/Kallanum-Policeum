@@ -16,6 +16,7 @@ interface UseRealtimeRoomReturn {
   connected: boolean
   broadcastPoint: (toId: string | null) => void
   broadcastEmote: (emoji: string) => void
+  status: string
 }
 
 export function useRealtimeRoom({
@@ -24,6 +25,7 @@ export function useRealtimeRoom({
 }: UseRealtimeRoomParams): UseRealtimeRoomReturn {
   const navigate = useNavigate()
   const [connected, setConnected] = useState(false)
+  const [statusStr, setStatusStr] = useState<string>('CONNECTING')
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   // Use refs to avoid stale closures in channel callbacks
@@ -225,7 +227,8 @@ export function useRealtimeRoom({
     })
 
     // ── Subscribe & track ──
-    channel.subscribe(async (status) => {
+    channel.subscribe(async (status, err) => {
+      setStatusStr(status + (err ? ` (${err})` : ''))
       if (status === 'SUBSCRIBED') {
         setConnected(true)
         await channel.track({
@@ -233,7 +236,7 @@ export function useRealtimeRoom({
           username: currentUsername,
           online_at: new Date().toISOString(),
         })
-      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         setConnected(false)
       }
     })
@@ -266,6 +269,6 @@ export function useRealtimeRoom({
     useGameStore.getState().setEmote(myPlayerId, emoji)
   }
 
-  return { channel: channelRef.current, connected, broadcastPoint, broadcastEmote }
+  return { channel: channelRef.current, connected, broadcastPoint, broadcastEmote, status: statusStr }
 }
 
