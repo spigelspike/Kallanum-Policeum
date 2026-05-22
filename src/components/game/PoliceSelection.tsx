@@ -61,7 +61,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
   useEffect(() => {
     if (timeLeft === 0 && !submitted && !loading) {
       // Auto-accuse oneself to guarantee the Thief wins on timeout
-      handleAccuse(myPlayerId)
+      handleAccuse(myPlayerId!)
     }
   }, [timeLeft, submitted, loading, myPlayerId])
 
@@ -126,7 +126,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
 
             {/* Confirm */}
             <button
-              onClick={handleAccuse}
+              onClick={() => handleAccuse()}
               disabled={loading}
               className="flex-[2] relative group rounded-lg active:scale-95 transition-all focus:outline-none disabled:opacity-50"
             >

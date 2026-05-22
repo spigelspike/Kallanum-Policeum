@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { playClick } from '../../utils/sounds'
 
 interface HowToPlayModalProps {

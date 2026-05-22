@@ -57,7 +57,6 @@ export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRo
         <motion.div
           className="w-full h-full relative cursor-pointer"
           style={{ transformStyle: 'preserve-3d' }}
-          animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
           whileHover={!isFlipped ? { scale: 1.02 } : { scale: 1.02 }}
           whileTap={!isFlipped ? { scale: 0.98 } : {}}
