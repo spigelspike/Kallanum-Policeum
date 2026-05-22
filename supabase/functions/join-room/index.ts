@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 
@@ -90,9 +91,7 @@ Deno.serve(async (req) => {
   }));
 
   // Broadcast to existing players
-  const ch = admin.channel(`room:${room.id}`);
-  ch.send({ type: "broadcast", event: "PLAYER_JOINED", payload: { id: user.id, username, score: 0, isConnected: true, isHost: false, avatarKey } });
-  await admin.removeChannel(ch);
+  await sendBroadcast(admin, room.id, "PLAYER_JOINED", { id: user.id, username, score: 0, isConnected: true, isHost: false, avatarKey });
 
   return new Response(JSON.stringify({ roomId: room.id, roomCode: room.code, players: allPlayers }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });

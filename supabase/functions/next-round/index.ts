@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -76,9 +77,7 @@ Deno.serve(async (req) => {
     await admin.from("rooms").update({ phase: "FINAL_RESULTS" }).eq("id", roomId);
     const sorted = [...players].sort((a, b) => b.score - a.score);
     const finalScores = sorted.map((p, i) => ({ playerId: p.player_id, username: p.username, totalScore: p.score, rank: i + 1 }));
-    const ch = admin.channel(`room:${roomId}`);
-    ch.send({ type: "broadcast", event: "GAME_ENDED", payload: { finalScores } });
-    await admin.removeChannel(ch);
+    await sendBroadcast(admin, roomId, "GAME_ENDED", { finalScores });
     return jsonSuccess({ success: true, isLastRound: true }, cors);
   }
 
@@ -112,9 +111,7 @@ Deno.serve(async (req) => {
     phase_ends_at: phaseEndsAt
   }).eq("id", roomId);
 
-  const ch = admin.channel(`room:${roomId}`);
-  ch.send({ type: "broadcast", event: "ROUND_STARTED", payload: { roundNumber: nextRound, policeId: policePlayerId, phase: "DISCUSSION" } });
-  await admin.removeChannel(ch);
+  await sendBroadcast(admin, roomId, "ROUND_STARTED", { roundNumber: nextRound, policeId: policePlayerId, phase: "DISCUSSION" });
 
   return jsonSuccess({ success: true, isLastRound: false }, cors);
 });

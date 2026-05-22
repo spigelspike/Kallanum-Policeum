@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -51,9 +52,7 @@ Deno.serve(async (req) => {
   await admin.from("rooms").update({ host_id: newHost.player_id }).eq("id", roomId);
   await admin.from("room_players").update({ is_connected: false }).eq("room_id", roomId).eq("player_id", disconnectedHostId);
 
-  const ch = admin.channel(`room:${roomId}`);
-  ch.send({ type: "broadcast", event: "HOST_TRANSFERRED", payload: { newHostId: newHost.player_id, newHostUsername: newHost.username, reason: "Previous host disconnected" } });
-  await admin.removeChannel(ch);
+  await sendBroadcast(admin, roomId, "HOST_TRANSFERRED", { newHostId: newHost.player_id, newHostUsername: newHost.username, reason: "Previous host disconnected" });
 
   return jsonSuccess({ success: true, abandoned: false, newHostId: newHost.player_id }, cors);
 });

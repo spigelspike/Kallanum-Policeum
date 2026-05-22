@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 
@@ -107,9 +108,7 @@ Deno.serve(async (req) => {
     phase_ends_at: phaseEndsAt
   }).eq("id", roomId);
 
-  const channel = admin.channel(`room:${roomId}`);
-  channel.send({ type: "broadcast", event: "GAME_STARTED", payload: { policeId: policePlayerId, phase: "DISCUSSION" } });
-  await admin.removeChannel(channel);
+  await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION" });
 
   return jsonSuccess({ success: true, policeId: policePlayerId }, cors);
 });

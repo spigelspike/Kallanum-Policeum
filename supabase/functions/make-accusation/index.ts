@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -80,9 +81,7 @@ Deno.serve(async (req) => {
   await admin.from("round_results").insert({ room_id: roomId, round_number: room.current_round, police_id: user.id, thief_id: thiefRole.player_id, accused_id: accusedPlayerId, correct_guess: correct });
   await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
 
-  const channel = admin.channel(`room:${roomId}`);
-  channel.send({ type: "broadcast", event: "ACCUSATION_MADE", payload: { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: "", accusedRole: accusedRole?.role ?? "Unknown", policeId: user.id, scores: cumScores } });
-  await admin.removeChannel(channel);
+  await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: "", accusedRole: accusedRole?.role ?? "Unknown", policeId: user.id, scores: cumScores });
 
   return jsonSuccess({ success: true }, cors);
 });

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendBroadcast } from "../_shared/broadcast.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -53,12 +54,11 @@ Deno.serve(async (req) => {
   const { data: dcRole } = await admin.from("player_roles").select("role, role_points").eq("room_id", roomId).eq("player_id", disconnectedPlayerId).eq("round_number", room.current_round).maybeSingle();
   if (!dcRole) return jsonSuccess({ success: true, action: "marked_disconnected" }, cors);
 
-  const channel = admin.channel(`room:${roomId}`);
+
 
   if (dcRole.role === "Police") {
     await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
-    channel.send({ type: "broadcast", event: "ROUND_VOIDED", payload: { reason: "Police disconnected", disconnectedPlayerId } });
-    await admin.removeChannel(channel);
+    await sendBroadcast(admin, roomId, "ROUND_VOIDED", { reason: "Police disconnected", disconnectedPlayerId });
     return jsonSuccess({ success: true, action: "round_voided" }, cors);
   }
 
@@ -89,11 +89,9 @@ Deno.serve(async (req) => {
     await admin.from("round_results").insert({ room_id: roomId, round_number: room.current_round, police_id: policeRole.player_id, thief_id: disconnectedPlayerId, accused_id: disconnectedPlayerId, correct_guess: true });
     await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
 
-    channel.send({ type: "broadcast", event: "ACCUSATION_MADE", payload: { roundNumber: room.current_round, correctGuess: true, thiefId: disconnectedPlayerId, accusedId: disconnectedPlayerId, accusedRole: "Thief", policeId: policeRole.player_id, scores: cumScores, reason: "Thief disconnected" } });
-    await admin.removeChannel(channel);
+    await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: true, thiefId: disconnectedPlayerId, accusedId: disconnectedPlayerId, accusedRole: "Thief", policeId: policeRole.player_id, scores: cumScores, reason: "Thief disconnected" });
     return jsonSuccess({ success: true, action: "thief_auto_caught" }, cors);
   }
 
-  await admin.removeChannel(channel);
   return jsonSuccess({ success: true, action: "game_continues" }, cors);
 });
