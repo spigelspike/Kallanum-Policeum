@@ -235,7 +235,7 @@ export function useRealtimeRoom({
     })
 
     // ── Subscribe & track ──
-    let retryTimeoutId: NodeJS.Timeout;
+    let retryTimeoutId: ReturnType<typeof setTimeout>;
     
     const subscribeToChannel = () => {
       channel.subscribe(async (status, err) => {
