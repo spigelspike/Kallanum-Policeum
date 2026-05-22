@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/assets/typo_logo.png" alt="Kallanum Policeum Logo" width="500"/>
+  <img src="src/assets/typo_logo.webp" alt="Kallanum Policeum Logo" width="500"/>
   
   <br/>
   
