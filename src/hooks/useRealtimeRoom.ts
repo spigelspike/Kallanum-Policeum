@@ -227,21 +227,37 @@ export function useRealtimeRoom({
     })
 
     // ── Subscribe & track ──
-    channel.subscribe(async (status, err) => {
-      setStatusStr(status + (err ? ` (${err})` : ''))
-      if (status === 'SUBSCRIBED') {
-        setConnected(true)
-        await channel.track({
-          playerId: myPlayerId,
-          username: currentUsername,
-          online_at: new Date().toISOString(),
-        })
-      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        setConnected(false)
-      }
-    })
+    let retryTimeoutId: NodeJS.Timeout;
+    
+    const subscribeToChannel = () => {
+      channel.subscribe(async (status, err) => {
+        setStatusStr(status + (err ? ` (${err})` : ''))
+        if (status === 'SUBSCRIBED') {
+          setConnected(true)
+          await channel.track({
+            playerId: myPlayerId,
+            username: currentUsername,
+            online_at: new Date().toISOString(),
+          })
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setConnected(false)
+          
+          // Auto-reconnect after 3 seconds on transport failure
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            clearTimeout(retryTimeoutId)
+            retryTimeoutId = setTimeout(() => {
+              setStatusStr('RECONNECTING...')
+              subscribeToChannel()
+            }, 3000)
+          }
+        }
+      })
+    }
+    
+    subscribeToChannel()
 
     return () => {
+      clearTimeout(retryTimeoutId)
       setConnected(false)
       channelRef.current = null
       supabase.removeChannel(channel)
