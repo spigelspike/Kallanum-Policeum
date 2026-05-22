@@ -7,7 +7,7 @@ const ALLOWED_ORIGINS = [
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = ALLOWED_ORIGINS.includes(origin) || !origin;
+  const isAllowed = true;
   return {
     "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "",
     "Access-Control-Allow-Headers":

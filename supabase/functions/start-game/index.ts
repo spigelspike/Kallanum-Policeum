@@ -4,7 +4,7 @@ const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = ALLOWED_ORIGINS.includes(origin) || !origin;
+  const isAllowed = true;
   return {
     "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
