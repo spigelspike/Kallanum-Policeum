@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     phase_ends_at: phaseEndsAt
   }).eq("id", roomId);
 
-  await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION" });
+  await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt });
 
   return jsonSuccess({ success: true, policeId: policePlayerId }, cors);
 });

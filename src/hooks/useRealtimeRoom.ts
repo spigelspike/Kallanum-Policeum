@@ -136,7 +136,11 @@ export function useRealtimeRoom({
 
     // ── Broadcast: GAME_STARTED ──
     channel.on('broadcast', { event: 'GAME_STARTED' }, (message) => {
-      const payload = message.payload as { policeId: string; phase: string }
+      const payload = message.payload as { policeId: string; phase: string; phaseEndsAt?: string }
+      const currentRoom = useGameStore.getState().room
+      if (currentRoom) {
+        setRoom({ ...currentRoom, phaseEndsAt: payload.phaseEndsAt })
+      }
       setPoliceId(payload.policeId)
       setPhase('DISCUSSION')
       clearInteractiveState()
@@ -161,7 +165,11 @@ export function useRealtimeRoom({
     // ── Broadcast: ROUND_STARTED ──
     channel.on('broadcast', { event: 'ROUND_STARTED' }, (message) => {
       const payload = message.payload as {
-        roundNumber: number; policeId: string; phase: string
+        roundNumber: number; policeId: string; phase: string; phaseEndsAt?: string
+      }
+      const currentRoom = useGameStore.getState().room
+      if (currentRoom) {
+        setRoom({ ...currentRoom, phaseEndsAt: payload.phaseEndsAt })
       }
       setCurrentRound(payload.roundNumber)
       setPoliceId(payload.policeId)
