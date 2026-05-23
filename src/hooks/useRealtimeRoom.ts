@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useGameStore } from '../stores/gameStore'
+import { useVoiceStore } from '../stores/voiceStore'
 import { useMyRole } from './useMyRole'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { Player, RoundResult, FinalScore } from '../types/game'
@@ -234,6 +235,12 @@ export function useRealtimeRoom({
       setEmote(payload.playerId, payload.emoji)
     })
 
+    // ── Broadcast: VOICE_MUTED ──
+    channel.on('broadcast', { event: 'VOICE_MUTED' }, (message) => {
+      const payload = message.payload as { playerId: string; isMuted: boolean }
+      useVoiceStore.getState().setRemoteMuted(payload.playerId, payload.isMuted)
+    })
+
     // ── Subscribe & track ──
     let retryTimeoutId: ReturnType<typeof setTimeout>;
     
@@ -292,6 +299,18 @@ export function useRealtimeRoom({
     })
     useGameStore.getState().setEmote(myPlayerId, emoji)
   }
+
+  // ── Auto-Broadcast: Local Mute State ──
+  const isMuted = useVoiceStore((s) => s.isMuted)
+  useEffect(() => {
+    if (channelRef.current && myPlayerId && connected) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'VOICE_MUTED',
+        payload: { playerId: myPlayerId, isMuted },
+      })
+    }
+  }, [isMuted, myPlayerId, connected])
 
   return { channel: channelRef.current, connected, broadcastPoint, broadcastEmote, status: statusStr }
 }

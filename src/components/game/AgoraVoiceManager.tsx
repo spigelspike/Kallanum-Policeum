@@ -16,6 +16,9 @@ export default function AgoraVoiceManager() {
   )
 }
 
+// Map to track timeouts for the speaking indicator debounce
+const speakingTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
+
 function VoiceLogic() {
   const roomCode = useGameStore(s => s.room?.code)
   const myPlayerId = useGameStore(s => s.myPlayerId)
@@ -74,6 +77,10 @@ function VoiceLogic() {
       
       // If we mute ourselves, we should immediately stop showing our own speaking ring
       if (isMuted && myPlayerId) {
+        if (speakingTimeouts[myPlayerId]) {
+          clearTimeout(speakingTimeouts[myPlayerId])
+          delete speakingTimeouts[myPlayerId]
+        }
         setSpeaking(myPlayerId, false)
       }
     }
@@ -94,11 +101,27 @@ function VoiceLogic() {
         const speakingPlayer = players.find(p => getNumericUid(p.id) === numericUid)
         
         if (speakingPlayer) {
-          if (speakingPlayer.id === myPlayerId) {
-            // Prevent showing ourselves as speaking if we are locally muted
-            if (!isMuted) setSpeaking(speakingPlayer.id, speaking)
+          const pId = speakingPlayer.id
+          
+          if (speaking) {
+            // Cancel any pending timeout that would remove the speaking ring
+            if (speakingTimeouts[pId]) {
+              clearTimeout(speakingTimeouts[pId])
+              delete speakingTimeouts[pId]
+            }
+            
+            // Show speaking (unless it's us and we are muted locally to prevent echo visuals)
+            if (pId !== myPlayerId || !isMuted) {
+              setSpeaking(pId, true)
+            }
           } else {
-            setSpeaking(speakingPlayer.id, speaking)
+            // Debounce the stop-speaking indicator to prevent flickering
+            if (!speakingTimeouts[pId]) {
+              speakingTimeouts[pId] = setTimeout(() => {
+                setSpeaking(pId, false)
+                delete speakingTimeouts[pId]
+              }, 300)
+            }
           }
         }
       })

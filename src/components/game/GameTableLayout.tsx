@@ -40,6 +40,8 @@ export default function GameTableLayout({
   const pointers = useGameStore((s) => s.pointers)
   const emotes = useGameStore((s) => s.emotes)
   const speakingPlayers = useVoiceStore((s) => s.speakingPlayers)
+  const remoteMutedMap = useVoiceStore((s) => s.remoteMutedMap)
+  const isMeMuted = useVoiceStore((s) => s.isMuted)
   const [now, setNow] = useState(Date.now())
 
   // Force re-render periodically to clear old emotes
@@ -143,6 +145,7 @@ export default function GameTableLayout({
             const activeEmote = emotes[player.id]
             const isEmoting = activeEmote && (now - activeEmote.timestamp < 3500)
             const isSpeaking = speakingPlayers[player.id]
+            const playerIsMuted = isMe ? isMeMuted : (remoteMutedMap[player.id] ?? false)
 
             return (
               <div
@@ -242,6 +245,15 @@ export default function GameTableLayout({
                         ? 'bg-[#5ce65c] shadow-[0_0_6px_rgba(92,230,92,0.6)]'
                         : 'bg-[#e65c5c]'
                     }`} />
+                    
+                    {/* Muted indicator */}
+                    {playerIsMuted && (
+                      <div className="absolute -top-1 -right-1 bg-red-500/90 rounded-full p-0.5 border border-red-900 shadow-sm z-30">
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02 3.28c-.91.71-2.04 1.16-3.28 1.16-2.97 0-5.38-2.4-5.38-5.38H4.62c0 3.56 2.67 6.48 6.13 6.91V21h2.5v-4.03c1.02-.13 1.97-.47 2.82-.96l-1.09-1.09zM11.7 8.01L6.68 3 5.27 4.41 9 8.14v3.86c0 .48.09.94.25 1.37l1.01-1.01v-1.4h1.44l2.84 2.84 1.41-1.41L11.7 8.01zM11.7 3.5c1.47 0 2.68 1.21 2.68 2.68v4.3l-2.68-2.68v-4.3z"/>
+                        </svg>
+                      </div>
+                    )}
                   </div>
 
                   {/* Player name */}
