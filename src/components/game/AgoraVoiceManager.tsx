@@ -30,13 +30,15 @@ function VoiceLogic() {
   const shouldJoin = !!(appId && roomCode && myPlayerId)
 
   // Agora has a known bug with String UIDs crashing during track publishing (invalid data channel id).
-  // We use a safe numeric hash of the player UUID instead!
+  // Furthermore, its internal DataChannel expects IDs under 65535! 
+  // We use a safe numeric hash of the player UUID instead, squashed into 16 bits!
   const getNumericUid = (id: string) => {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
       hash = Math.imul(31, hash) + id.charCodeAt(i) | 0;
     }
-    return Math.abs(hash);
+    // Ensure the ID is exactly between 1 and 65535
+    return (Math.abs(hash) % 65534) + 1;
   }
 
   const myNumericUid = myPlayerId ? getNumericUid(myPlayerId) : undefined;
