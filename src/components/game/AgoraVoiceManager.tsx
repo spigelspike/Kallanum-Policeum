@@ -1,4 +1,4 @@
-import { AgoraRTCProvider, useJoin, useLocalMicrophoneTrack, useRemoteUsers, RemoteAudioTrack, useRTCClient, usePublish } from 'agora-rtc-react'
+import { AgoraRTCProvider, useJoin, useLocalMicrophoneTrack, useRemoteUsers, useRemoteAudioTracks, RemoteAudioTrack, useRTCClient, usePublish } from 'agora-rtc-react'
 import AgoraRTC from 'agora-rtc-sdk-ng'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
@@ -39,6 +39,9 @@ function VoiceLogic() {
   // Request microphone access and create the local audio track
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(shouldJoin)
   const remoteUsers = useRemoteUsers()
+  
+  // We MUST explicitly subscribe to remote users' audio tracks!
+  const { audioTracks } = useRemoteAudioTracks(remoteUsers)
 
   // CRITICAL: We must actually publish the track to the server so others can hear it!
   usePublish(localMicrophoneTrack ? [localMicrophoneTrack] : [])
@@ -91,8 +94,8 @@ function VoiceLogic() {
   return (
     <>
       {/* If the user is NOT deafened, render the audio streams of everyone else */}
-      {!isDeafened && remoteUsers.map(user => (
-        <RemoteAudioTrack key={user.uid} track={user.audioTrack} play={true} />
+      {!isDeafened && audioTracks.map(track => (
+        <RemoteAudioTrack key={track.getUserId()} track={track} play={true} />
       ))}
     </>
   )
