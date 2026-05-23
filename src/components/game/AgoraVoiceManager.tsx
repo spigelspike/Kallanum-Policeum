@@ -1,4 +1,4 @@
-import { AgoraRTCProvider, useJoin, useLocalMicrophoneTrack, useRemoteUsers, RemoteAudioTrack, useRTCClient } from 'agora-rtc-react'
+import { AgoraRTCProvider, useJoin, useLocalMicrophoneTrack, useRemoteUsers, RemoteAudioTrack, useRTCClient, usePublish } from 'agora-rtc-react'
 import AgoraRTC from 'agora-rtc-sdk-ng'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
@@ -39,6 +39,9 @@ function VoiceLogic() {
   // Request microphone access and create the local audio track
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(shouldJoin)
   const remoteUsers = useRemoteUsers()
+
+  // CRITICAL: We must actually publish the track to the server so others can hear it!
+  usePublish([localMicrophoneTrack])
 
   // Ensure we start muted and clean up when leaving
   useEffect(() => {
