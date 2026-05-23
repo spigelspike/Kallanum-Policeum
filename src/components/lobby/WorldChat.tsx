@@ -3,7 +3,7 @@ import { getAblyClient } from '../../lib/ably'
 import { supabase } from '../../lib/supabase'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
-import type { Types } from 'ably'
+
 
 export default function WorldChat() {
   const {
@@ -14,7 +14,7 @@ export default function WorldChat() {
     setWorldChatOnlineCount,
     myPlayerId,
   } = useGameStore()
-  const { username } = useProfileStore()
+  const { name } = useProfileStore()
 
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -22,7 +22,7 @@ export default function WorldChat() {
   const [errorMsg, setErrorMsg] = useState('')
   const [reportingId, setReportingId] = useState<string | null>(null)
 
-  const channelRef = useRef<Types.RealtimeChannelPromise | null>(null)
+  const channelRef = useRef<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const lastSentAt = useRef<number>(0)
@@ -71,7 +71,7 @@ export default function WorldChat() {
 
   // Ably Pub/Sub & Presence
   useEffect(() => {
-    if (!myPlayerId || !username) return
+    if (!myPlayerId || !name) return
 
     const client = getAblyClient()
     const channel = client.channels.get('world-chat')
@@ -93,14 +93,14 @@ export default function WorldChat() {
     channel.presence.subscribe('leave', updateCount)
     
     // Enter presence
-    channel.presence.enter({ username, playerId: myPlayerId }).then(updateCount)
+    channel.presence.enter({ username: name, playerId: myPlayerId }).then(updateCount)
 
     return () => {
       channel.presence.leave()
       channel.unsubscribe()
       // Do not close client as it is a singleton
     }
-  }, [myPlayerId, username, addWorldChatMessage, setWorldChatOnlineCount])
+  }, [myPlayerId, name, addWorldChatMessage, setWorldChatOnlineCount])
 
   // Auto-scroll logic
   const handleScroll = () => {

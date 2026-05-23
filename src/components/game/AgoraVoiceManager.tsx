@@ -2,7 +2,7 @@ import { AgoraRTCProvider, useJoin, useLocalMicrophoneTrack, useRemoteUsers, use
 import AgoraRTC from 'agora-rtc-sdk-ng'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 // Create a single global client instance for Agora
 // We use the RTC mode and vp8 codec which is standard for high quality audio/video
@@ -10,7 +10,7 @@ const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
 
 export default function AgoraVoiceManager() {
   return (
-    <AgoraRTCProvider client={client}>
+    <AgoraRTCProvider client={client as any}>
       <VoiceLogic />
     </AgoraRTCProvider>
   )
