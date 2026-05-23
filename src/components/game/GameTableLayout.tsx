@@ -3,6 +3,7 @@ import type { Player } from '../../types/game'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { useGameStore } from '../../stores/gameStore'
+import { useVoiceStore } from '../../stores/voiceStore'
 import mainGameMobile from '../../assets/main_game.webp'
 import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
@@ -38,6 +39,7 @@ export default function GameTableLayout({
   const { avatar: myAvatar } = useProfileStore()
   const pointers = useGameStore((s) => s.pointers)
   const emotes = useGameStore((s) => s.emotes)
+  const speakingPlayers = useVoiceStore((s) => s.speakingPlayers)
   const [now, setNow] = useState(Date.now())
 
   // Force re-render periodically to clear old emotes
@@ -140,6 +142,7 @@ export default function GameTableLayout({
             const resolvedAvatar = avatarKeyToUrl(player.avatarKey) || (isMe ? myAvatar : null)
             const activeEmote = emotes[player.id]
             const isEmoting = activeEmote && (now - activeEmote.timestamp < 3500)
+            const isSpeaking = speakingPlayers[player.id]
 
             return (
               <div
@@ -188,15 +191,19 @@ export default function GameTableLayout({
                   {/* Avatar container with ornate border */}
                   <div className={`relative transition-all duration-300 ${isSelected ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent' : ''}`} style={{ borderRadius: '50%' }}>
                     {/* Outer golden or blue ring */}
-                    <div className="rounded-full p-[2.5px]" style={{
-                      background: isPolice
+                    <div className="rounded-full p-[2.5px] transition-all duration-150" style={{
+                      background: isSpeaking
+                        ? 'linear-gradient(135deg, #4ade80, #22c55e, #4ade80)'
+                        : isPolice
                         ? 'linear-gradient(135deg, #60a5fa, #2563eb, #60a5fa)'
                         : isSelected
                         ? 'linear-gradient(135deg, #ffe58f, #d4af37, #ffe58f)'
                         : isMe
                         ? 'linear-gradient(135deg, #d4af37, #8a6b20, #d4af37)'
                         : 'linear-gradient(135deg, #8a6b20, #5a3e15, #8a6b20)',
-                      boxShadow: isPolice
+                      boxShadow: isSpeaking
+                        ? '0 0 20px rgba(74,222,128,0.9), 0 0 40px rgba(74,222,128,0.5)'
+                        : isPolice
                         ? '0 0 20px rgba(59,130,246,0.8), 0 0 40px rgba(59,130,246,0.4)'
                         : isSelected
                         ? '0 0 20px rgba(212,175,55,0.6), 0 0 40px rgba(212,175,55,0.2)'

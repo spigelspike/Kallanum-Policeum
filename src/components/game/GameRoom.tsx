@@ -6,6 +6,8 @@ import WaitingLobby from './WaitingLobby'
 import RoleReveal from './RoleReveal'
 import DiscussionPhase from './DiscussionPhase'
 import RoundResult from './RoundResult'
+import AgoraVoiceManager from './AgoraVoiceManager'
+import VoiceControls from './VoiceControls'
 
 export default function GameRoom() {
   const { code } = useParams<{ code: string }>()
@@ -50,6 +52,10 @@ export default function GameRoom() {
         />
         {connected ? 'Connected' : `Reconnecting... (${status})`}
       </div>
+
+      {/* Voice Chat System */}
+      <AgoraVoiceManager />
+      <VoiceControls />
 
       {/* Phase rendering */}
       {phase === 'WAITING' && <WaitingLobby />}
