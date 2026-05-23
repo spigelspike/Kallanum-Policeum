@@ -78,9 +78,10 @@ export default function WorldChat() {
     channelRef.current = channel
 
     // Message subscription
-    channel.subscribe('message', (msg) => {
+    const onMessage = (msg: any) => {
       addWorldChatMessage(msg.data)
-    })
+    }
+    channel.subscribe('message', onMessage)
 
     // Presence update helper
     const updateCount = async () => {
@@ -97,7 +98,9 @@ export default function WorldChat() {
 
     return () => {
       channel.presence.leave()
-      channel.unsubscribe()
+      channel.presence.unsubscribe('enter', updateCount)
+      channel.presence.unsubscribe('leave', updateCount)
+      channel.unsubscribe('message', onMessage)
       // Do not close client as it is a singleton
     }
   }, [myPlayerId, name, addWorldChatMessage, setWorldChatOnlineCount])
