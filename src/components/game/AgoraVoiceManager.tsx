@@ -19,6 +19,7 @@ export default function AgoraVoiceManager() {
 function VoiceLogic() {
   const roomCode = useGameStore(s => s.room?.code)
   const myPlayerId = useGameStore(s => s.myPlayerId)
+  const players = useGameStore(s => s.players) // Need this to reverse-lookup the speaking player
   
   const { isMuted, isDeafened, setSpeaking, resetVoice } = useVoiceStore()
   const rtcClient = useRTCClient()
@@ -28,12 +29,24 @@ function VoiceLogic() {
   // We only connect to the voice channel if we are in a room, have a player ID, and an App ID
   const shouldJoin = !!(appId && roomCode && myPlayerId)
 
+  // Agora has a known bug with String UIDs crashing during track publishing (invalid data channel id).
+  // We use a safe numeric hash of the player UUID instead!
+  const getNumericUid = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = Math.imul(31, hash) + id.charCodeAt(i) | 0;
+    }
+    return Math.abs(hash);
+  }
+
+  const myNumericUid = myPlayerId ? getNumericUid(myPlayerId) : undefined;
+
   // useJoin handles automatically joining and leaving the channel
   useJoin({
     appid: appId,
     channel: roomCode || 'lobby',
     token: null, // Null is allowed for "Testing Mode" projects in Agora
-    uid: myPlayerId || undefined // String UIDs are supported by Agora now!
+    uid: myNumericUid 
   }, shouldJoin)
 
   // Request microphone access and create the local audio track
@@ -73,13 +86,18 @@ function VoiceLogic() {
       volumes.forEach((vol) => {
         // level goes from 0 to 100. >5 is a good threshold for speaking vs background noise
         const speaking = vol.level > 5
-        const uidStr = vol.uid.toString()
+        const numericUid = Number(vol.uid)
         
-        // Prevent showing ourselves as speaking if we are muted (just in case of echo)
-        if (uidStr === myPlayerId) {
-          if (!isMuted) setSpeaking(myPlayerId, speaking)
-        } else {
-          setSpeaking(uidStr, speaking)
+        // Reverse lookup: find which player ID matches this numeric UID
+        const speakingPlayer = players.find(p => getNumericUid(p.id) === numericUid)
+        
+        if (speakingPlayer) {
+          if (speakingPlayer.id === myPlayerId) {
+            // Prevent showing ourselves as speaking if we are locally muted
+            if (!isMuted) setSpeaking(speakingPlayer.id, speaking)
+          } else {
+            setSpeaking(speakingPlayer.id, speaking)
+          }
         }
       })
     }
@@ -89,7 +107,7 @@ function VoiceLogic() {
     return () => {
       rtcClient.off("volume-indicator", handleVolumeIndicator)
     }
-  }, [rtcClient, setSpeaking, myPlayerId, isMuted])
+  }, [rtcClient, setSpeaking, myPlayerId, isMuted, players])
 
   return (
     <>
