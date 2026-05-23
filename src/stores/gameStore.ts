@@ -155,8 +155,23 @@ export const useGameStore = create<GameState>((set) => ({
   setWorldChatMessages: (messages) => set({ worldChatMessages: messages }),
   
   addWorldChatMessage: (msg) => set((state) => {
-    // Avoid duplicates by ID
+    // Avoid duplicates by exact ID
     if (state.worldChatMessages.find(m => m.id === msg.id)) return state
+
+    // Handle Optimistic Updates: Replace temp message with the real one
+    if (!msg.id.startsWith('temp-')) {
+      const tempIndex = state.worldChatMessages.findIndex(m => 
+        m.id.startsWith('temp-') && 
+        m.playerId === msg.playerId && 
+        m.message === msg.message
+      )
+      if (tempIndex !== -1) {
+        const newArr = [...state.worldChatMessages]
+        newArr[tempIndex] = msg
+        return { worldChatMessages: newArr }
+      }
+    }
+
     return { 
       worldChatMessages: [...state.worldChatMessages.slice(-99), msg] 
     }

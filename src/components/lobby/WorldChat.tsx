@@ -79,9 +79,13 @@ export default function WorldChat() {
 
     // Message subscription
     const onMessage = (msg: any) => {
-      addWorldChatMessage(msg.data)
+      console.log('[Ably] Received message:', msg)
+      if (msg.name === 'message' || msg.data?.message) {
+        addWorldChatMessage(msg.data)
+      }
     }
-    channel.subscribe('message', onMessage)
+    // Subscribe to ALL events on the channel
+    channel.subscribe(onMessage)
 
     // Presence update helper
     const updateCount = async () => {
@@ -100,7 +104,7 @@ export default function WorldChat() {
       channel.presence.leave()
       channel.presence.unsubscribe('enter', updateCount)
       channel.presence.unsubscribe('leave', updateCount)
-      channel.unsubscribe('message', onMessage)
+      channel.unsubscribe(onMessage)
       // Do not close client as it is a singleton
     }
   }, [myPlayerId, name, addWorldChatMessage, setWorldChatOnlineCount])
@@ -135,6 +139,15 @@ export default function WorldChat() {
     setInput('') // Optimistic clear
     lastSentAt.current = now
 
+    // Optimistic Update: Instantly show message in UI
+    addWorldChatMessage({
+      id: `temp-${now}`,
+      playerId: myPlayerId,
+      username: name,
+      message: trimmed,
+      timestamp: now
+    })
+
     try {
       const session = await supabase.auth.getSession()
       const token = session.data.session?.access_token
@@ -152,6 +165,11 @@ export default function WorldChat() {
       console.error(err)
       setErrorMsg(err.message || 'Error sending message')
       setInput(trimmed) // Restore input on failure
+      
+      // Rollback optimistic update
+      const { worldChatMessages, setWorldChatMessages } = useGameStore.getState()
+      setWorldChatMessages(worldChatMessages.filter(m => m.id !== `temp-${now}`))
+
       setTimeout(() => setErrorMsg(''), 3000)
     } finally {
       setSending(false)
