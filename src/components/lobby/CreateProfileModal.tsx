@@ -15,13 +15,13 @@ const AVATARS = {
   female: [female1, female2, female3],
 }
 
-export default function CreateProfileModal() {
-  const { setProfile } = useProfileStore()
+export default function CreateProfileModal({ onClose }: { onClose?: () => void }) {
+  const { name: storedName, gender: storedGender, avatar: storedAvatar, setProfile } = useProfileStore()
   const { t } = useLanguageStore()
 
-  const [name, setName] = useState('')
-  const [gender, setGender] = useState<'male' | 'female' | null>(null)
-  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+  const [name, setName] = useState(storedName || '')
+  const [gender, setGender] = useState<'male' | 'female' | null>(storedGender || null)
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(storedAvatar || null)
   const [error, setError] = useState<string | null>(null)
 
   const handleGenderSelect = (g: 'male' | 'female') => {
@@ -41,6 +41,7 @@ export default function CreateProfileModal() {
     if (!selectedAvatar) { setError('Please choose an avatar.'); return }
     const key = avatarUrlToKey(selectedAvatar) || 'male1'
     setProfile(trimmedName, gender, selectedAvatar, key)
+    if (onClose) onClose()
   }
 
   return (
@@ -130,8 +131,16 @@ export default function CreateProfileModal() {
                       WebkitTextFillColor: 'transparent',
                       filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
                     }}>
-                      {t.profile.title.split(' ')[0]}<br />{t.profile.title.split(' ').slice(1).join(' ')}
+                      {onClose ? "Edit Profile" : (t.profile.title.split(' ')[0] + '\n' + t.profile.title.split(' ').slice(1).join(' '))}
                     </h2>
+
+                    {onClose && (
+                      <button onClick={onClose} className="absolute top-6 right-6 text-[#c89f59] hover:text-white transition-colors">
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
 
                     {/* ── Select Gender ── */}
                     <SectionLabel text={t.profile.selectGender} />

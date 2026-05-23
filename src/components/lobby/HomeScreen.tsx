@@ -57,6 +57,7 @@ export default function HomeScreen() {
   const [localError, setLocalError] = useState<string | null>(null)
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showBugReport, setShowBugReport] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
 
   // Sound Store
   const { isMuted, toggleMute } = useSoundStore()
@@ -102,8 +103,10 @@ export default function HomeScreen() {
       {/* Background Music (Autoplays when unmuted if browser allows, otherwise waits for interaction) */}
       <audio src={bgMusic} autoPlay loop muted={isMuted} />
 
-      {/* Profile Creation Modal */}
-      {!hasProfile && <CreateProfileModal />}
+      {/* Profile Creation / Edit Modal */}
+      {(!hasProfile || showEditProfile) && (
+        <CreateProfileModal onClose={hasProfile ? () => setShowEditProfile(false) : undefined} />
+      )}
 
       {/* How To Play Modal */}
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
@@ -169,10 +172,16 @@ export default function HomeScreen() {
             </div>
 
             {hasProfile && (
-              <div className="flex items-center gap-3 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg animate-in fade-in duration-1000 mb-8 md:mb-12">
-                {avatar && <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-amber-400/50" />}
+              <button 
+                onClick={() => { playClick(); setShowEditProfile(true) }}
+                className="flex items-center gap-3 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg animate-in fade-in duration-1000 mb-8 md:mb-12 hover:bg-black/70 hover:border-amber-400/50 transition-all group"
+              >
+                {avatar && <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-amber-400/50 group-hover:scale-110 transition-transform" />}
                 <span className="text-white font-bold text-sm uppercase tracking-wider">{name}</span>
-              </div>
+                <svg className="w-4 h-4 text-white/50 group-hover:text-amber-400 ml-1 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
             )}
           </div>
 
