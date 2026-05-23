@@ -12,11 +12,13 @@ export function useMyRole(): UseMyRoleReturn {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const myPlayerId = useGameStore((s) => s.myPlayerId)
-  const room = useGameStore((s) => s.room)
-  const setMyRole = useGameStore((s) => s.setMyRole)
-
   const fetchMyRole = useCallback(async () => {
+    // Read directly from getState to avoid stale closures inside event listeners
+    const state = useGameStore.getState()
+    const myPlayerId = state.myPlayerId
+    const room = state.room
+    const setMyRole = state.setMyRole
+
     if (!myPlayerId || !room) {
       setError('Missing player or room information')
       return
@@ -51,7 +53,7 @@ export function useMyRole(): UseMyRoleReturn {
     } finally {
       setLoading(false)
     }
-  }, [myPlayerId, room, setMyRole])
+  }, [])
 
   return { fetchMyRole, loading, error }
 }
