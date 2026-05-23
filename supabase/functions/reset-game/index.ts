@@ -77,8 +77,7 @@ Deno.serve(async (req) => {
   // 3. Reset room phase to WAITING and current_round to 1
   await admin.from("rooms").update({ 
     phase: "WAITING",
-    current_round: 1,
-    phase_ends_at: null
+    current_round: 1
   }).eq("id", roomId);
 
   // 4. Broadcast reset so clients can update their local state

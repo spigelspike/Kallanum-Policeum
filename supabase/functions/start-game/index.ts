@@ -86,6 +86,9 @@ Deno.serve(async (req) => {
   ];
   const shuffledRoles = fisherYatesShuffle(fullRoleList);
 
+  // Clear any existing roles for this round in case of a previous failed attempt
+  await admin.from("player_roles").delete().eq("room_id", roomId).eq("round_number", room.current_round);
+
   let policePlayerId: string | null = null;
   for (let i = 0; i < players.length; i++) {
     const { error: insErr } = await admin.from("player_roles").insert({
@@ -103,10 +106,13 @@ Deno.serve(async (req) => {
 
   // Set phase to DISCUSSION and start the 60-second timer
   const phaseEndsAt = new Date(Date.now() + 60000).toISOString();
-  await admin.from("rooms").update({ 
-    phase: "DISCUSSION",
-    phase_ends_at: phaseEndsAt
+  const { error: updErr } = await admin.from("rooms").update({ 
+    phase: "DISCUSSION"
   }).eq("id", roomId);
+  
+  if (updErr) {
+    return jsonError(`Failed to update room phase: ${updErr.message}`, cors, 500);
+  }
 
   await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt });
 

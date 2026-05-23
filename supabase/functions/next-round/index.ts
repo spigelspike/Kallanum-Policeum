@@ -107,8 +107,7 @@ Deno.serve(async (req) => {
   const phaseEndsAt = new Date(Date.now() + 60000).toISOString();
   await admin.from("rooms").update({ 
     current_round: nextRound, 
-    phase: "DISCUSSION",
-    phase_ends_at: phaseEndsAt
+    phase: "DISCUSSION"
   }).eq("id", roomId);
 
   await sendBroadcast(admin, roomId, "ROUND_STARTED", { roundNumber: nextRound, policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt });

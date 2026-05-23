@@ -79,9 +79,22 @@ export function useRealtimeRoom({
     // ── Security: Verify broadcast authenticity ──
     const verifyBroadcastPhase = async (expectedPhase: string): Promise<boolean> => {
       try {
-        const { data } = await supabase.from('rooms').select('phase').eq('id', roomId).single()
-        if (data?.phase !== expectedPhase) {
-          console.warn(`[Security] Ignored unauthorized broadcast. Expected ${expectedPhase}, got ${data?.phase}`)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return false;
+
+        const response = await supabase.functions.invoke('verify-phase', {
+          body: { roomId },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (response.error) {
+          console.error('[Security] Edge Function verification failed:', response.error);
+          return false;
+        }
+
+        const actualPhase = response.data?.phase;
+        if (actualPhase !== expectedPhase) {
+          console.warn(`[Security] Ignored unauthorized broadcast. Expected ${expectedPhase}, got ${actualPhase}`)
           return false
         }
         return true

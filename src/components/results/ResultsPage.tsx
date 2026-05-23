@@ -78,7 +78,7 @@ export default function ResultsPage() {
               username: p.username,
               totalScore: p.score,
               rank: idx + 1,
-              avatarKey: storePlayer?.avatarKey || null,
+              avatarKey: storePlayer?.avatarKey || p.avatar_key || null,
             }
           })
 

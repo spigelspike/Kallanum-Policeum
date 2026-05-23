@@ -48,7 +48,16 @@ export default function WaitingLobby() {
       })
 
       if (response.error) {
-        setError(response.error.message || 'Failed to start game')
+        let msg = response.error.message
+        if ('context' in response.error && typeof (response.error as any).context?.json === 'function') {
+          try {
+            const body = await (response.error as any).context.json()
+            if (body && body.error) {
+              msg = body.error
+            }
+          } catch (_) {}
+        }
+        setError(msg || 'Failed to start game')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start game')

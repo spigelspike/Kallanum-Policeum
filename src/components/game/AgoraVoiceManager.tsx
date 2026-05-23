@@ -1,4 +1,5 @@
-import AgoraRTC, { IRemoteUser, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng'
+import AgoraRTC from 'agora-rtc-sdk-ng'
+
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { useEffect, useRef, useState } from 'react'
@@ -25,8 +26,8 @@ export default function AgoraVoiceManager() {
   const players = useGameStore(s => s.players)
   const { isMuted, isDeafened, setSpeaking, resetVoice } = useVoiceStore()
 
-  const [localTrack, setLocalTrack] = useState<IMicrophoneAudioTrack | null>(null)
-  const [remoteUsers, setRemoteUsers] = useState<IRemoteUser[]>([])
+  const [localTrack, setLocalTrack] = useState<any | null>(null)
+  const [remoteUsers, setRemoteUsers] = useState<any[]>([])
 
   const playersRef = useRef(players)
   const isMutedRef = useRef(isMuted)
@@ -53,7 +54,7 @@ export default function AgoraVoiceManager() {
     }
 
     let active = true
-    let micTrack: IMicrophoneAudioTrack | null = null
+    let micTrack: any | null = null
     const numericUid = getNumericUid(myPlayerId)
 
     const setupVoice = async () => {
@@ -133,7 +134,7 @@ export default function AgoraVoiceManager() {
 
   // Track remote users and subscribe/play their audio tracks
   useEffect(() => {
-    const handleUserPublished = async (user: IRemoteUser, mediaType: 'audio' | 'video') => {
+    const handleUserPublished = async (user: any, mediaType: 'audio' | 'video') => {
       if (mediaType === 'audio') {
         console.log("[Agora] Remote user published audio:", user.uid)
         try {
@@ -152,7 +153,7 @@ export default function AgoraVoiceManager() {
       }
     }
 
-    const handleUserUnpublished = (user: IRemoteUser, mediaType: 'audio' | 'video') => {
+    const handleUserUnpublished = (user: any, mediaType: 'audio' | 'video') => {
       if (mediaType === 'audio') {
         console.log("[Agora] Remote user unpublished audio:", user.uid)
         if (user.audioTrack) {
@@ -162,7 +163,7 @@ export default function AgoraVoiceManager() {
       }
     }
 
-    const handleUserLeft = (user: IRemoteUser) => {
+    const handleUserLeft = (user: any) => {
       console.log("[Agora] Remote user left:", user.uid)
       if (user.audioTrack) {
         user.audioTrack.stop()

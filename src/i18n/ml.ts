@@ -133,8 +133,6 @@ export const ml: typeof en = {
     policeCaught: "പോലീസ് കള്ളനെ കൃത്യമായി കണ്ടുപിടിച്ചു!",
     policeWrong: "പോലീസ് ആളുമാറി പിടിച്ചു!",
     points: "പോയിന്റുകൾ",
-    nextRound: "അടുത്ത റൗണ്ട്",
-    finalResults: "ഫൈനൽ റിസൾട്ട്",
     gameOver: "കളി തീർന്നു",
     playAgain: "വീണ്ടും കളിക്കുക",
     returnHome: "ഹോമിലേക്ക് മാറുക",

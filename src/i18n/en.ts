@@ -131,8 +131,6 @@ export const en = {
     policeCaught: "Police correctly caught the Kallan!",
     policeWrong: "Police accused the wrong person!",
     points: "Points",
-    nextRound: "Next Round",
-    finalResults: "Final Results",
     gameOver: "Game Over",
     playAgain: "Play Again",
     returnHome: "Return Home",

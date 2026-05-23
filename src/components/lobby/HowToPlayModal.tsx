@@ -118,7 +118,7 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                               </svg>
                             </div>
                             <div className="text-left flex-1">
-                              <h3 className="font-serif font-bold text-red-400 text-base uppercase tracking-widest mb-1">{t.roles.kallan}</h3>
+                              <h3 className="font-serif font-bold text-red-400 text-base uppercase tracking-widest mb-1">{t.roles.thief}</h3>
                               <p className="font-serif text-xs text-red-200/80 leading-relaxed">{t.rules.thiefDesc}</p>
                             </div>
                           </div>
