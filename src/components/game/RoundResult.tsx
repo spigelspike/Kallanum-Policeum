@@ -4,6 +4,7 @@ import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { playWin, playLose } from '../../utils/sounds'
 import { supabase } from '../../lib/supabase'
+import { useLanguageStore } from '../../stores/languageStore'
 import mainGameMobile from '../../assets/main_game.webp'
 import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
@@ -13,6 +14,7 @@ export default function RoundResult() {
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const lastResult = useGameStore((s) => s.lastResult)
   const { avatar: myAvatar } = useProfileStore()
+  const { t } = useLanguageStore()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +139,7 @@ export default function RoundResult() {
                     <div className="relative z-10 px-6 sm:px-8 pt-8 pb-5">
 
                       {/* Round label */}
-                      <SectionDivider text={`Round ${lastResult.roundNumber} Result`} />
+                      <SectionDivider text={t.game.roundResult.replace('{{round}}', lastResult.roundNumber.toString())} />
 
                       {/* Result Banner */}
                       <div className="flex flex-col items-center mt-4 mb-6">
@@ -149,12 +151,12 @@ export default function RoundResult() {
                               WebkitTextFillColor: 'transparent',
                               filter: 'drop-shadow(0 3px 8px rgba(34,197,94,0.4))',
                             }}>
-                              Thief Caught!
+                              {t.game.thiefCaught}
                             </h2>
                             <p className="font-serif text-sm text-[#c89f59] text-center">
-                              <span className="font-bold text-blue-400">{policePlayer?.username}</span>
-                              {' '}correctly accused{' '}
-                              <span className="font-bold text-red-400">{accusedPlayer?.username}</span>
+                              {t.game.correctlyAccused
+                                .replace('{{police}}', policePlayer?.username || 'Police')
+                                .replace('{{accused}}', accusedPlayer?.username || 'Thief')}
                             </p>
                           </>
                         ) : (
@@ -165,23 +167,23 @@ export default function RoundResult() {
                               WebkitTextFillColor: 'transparent',
                               filter: 'drop-shadow(0 3px 8px rgba(239,68,68,0.4))',
                             }}>
-                              Thief Escaped!
+                              {t.game.thiefEscaped}
                             </h2>
                             <p className="font-serif text-sm text-[#c89f59] text-center">
-                              <span className="font-bold text-blue-400">{policePlayer?.username}</span>
-                              {' '}accused{' '}
-                              <span className="font-bold text-[#ffe58f]">{accusedPlayer?.username}</span>
-                              {' '}({lastResult.accusedRole})
+                              {t.game.wronglyAccused
+                                .replace('{{police}}', policePlayer?.username || 'Police')
+                                .replace('{{accused}}', accusedPlayer?.username || 'Player')
+                                .replace('{{role}}', t.roles[lastResult.accusedRole.toLowerCase() as keyof typeof t.roles] || lastResult.accusedRole)}
                             </p>
                             <p className="font-serif text-xs text-[#8a6b20] mt-1">
-                              The Thief was <span className="font-bold text-red-400">{thiefPlayer?.username}</span>
+                              {t.game.theThiefWas.replace('{{thief}}', thiefPlayer?.username || 'Thief')}
                             </p>
                           </>
                         )}
                       </div>
 
                       {/* Scoreboard */}
-                      <SectionDivider text="Scores" />
+                      <SectionDivider text={t.game.scores} />
                       <div className="space-y-1.5 mt-2 mb-4 max-h-[30vh] overflow-y-auto">
                         {sortedPlayers.map((player, idx) => {
                           const resolvedAvatar = avatarKeyToUrl(player.avatarKey) || (player.id === myPlayerId ? myAvatar : null)
@@ -215,7 +217,7 @@ export default function RoundResult() {
                                   </div>
                                   <span className={`font-serif font-bold text-sm tracking-wider ${isMe ? 'text-[#ffe58f]' : 'text-[#c89f59]'}`}>
                                     {player.username}
-                                    {isMe && <span className="text-[#8a6b20] text-[10px] ml-1">(You)</span>}
+                                    {isMe && <span className="text-[#8a6b20] text-[10px] ml-1">{t.game.you}</span>}
                                   </span>
                                 </div>
                                 <span className="font-serif font-black text-sm tracking-wider" style={{
@@ -252,7 +254,7 @@ export default function RoundResult() {
                                   WebkitBackgroundClip: 'text',
                                   WebkitTextFillColor: 'transparent',
                                 }}>
-                                  {loading ? 'Loading...' : 'See Final Results'}
+                                  {loading ? t.game.loading : t.game.seeFinalResults}
                                 </span>
                               </div>
                             </button>
@@ -274,7 +276,7 @@ export default function RoundResult() {
                                   WebkitBackgroundClip: 'text',
                                   WebkitTextFillColor: 'transparent',
                                 }}>
-                                  {loading ? 'Loading...' : `Next Round (${room.currentRound + 1}/${room.totalRounds})`}
+                                  {loading ? t.game.loading : `${t.game.nextRound} (${room.currentRound + 1}/${room.totalRounds})`}
                                 </span>
                               </div>
                             </button>
@@ -285,7 +287,7 @@ export default function RoundResult() {
                       {!canAdvance && (
                         <div className="w-full text-center py-2 mt-2">
                           <span className="text-[#c89f59] font-serif text-xs italic tracking-wide">
-                            Waiting for host to continue...
+                            {t.game.waitingForHostToContinue}
                           </span>
                         </div>
                       )}

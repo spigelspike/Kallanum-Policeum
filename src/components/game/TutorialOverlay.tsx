@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTutorialStore } from '../../stores/tutorialStore'
+import { useLanguageStore } from '../../stores/languageStore'
 import { playClick } from '../../utils/sounds'
 
 const TUTORIAL_STEPS = [
@@ -28,6 +29,7 @@ const TUTORIAL_STEPS = [
 
 export default function TutorialOverlay() {
   const { hasSeenTutorial, completeTutorial } = useTutorialStore()
+  const { t } = useLanguageStore()
   const [stepIndex, setStepIndex] = useState(0)
 
   if (hasSeenTutorial) return null
@@ -91,11 +93,11 @@ export default function TutorialOverlay() {
               </svg>
 
               <span className="font-serif font-black text-lg tracking-wider mb-2 text-[#ffe58f] drop-shadow-md mt-2">
-                {currentStep.title}
+                {t.tutorial[`step${stepIndex + 1}Title` as keyof typeof t.tutorial]}
               </span>
               
               <p className="font-serif text-sm text-[#c89f59] leading-relaxed mb-6">
-                {currentStep.text}
+                {t.tutorial[`step${stepIndex + 1}Text` as keyof typeof t.tutorial]}
               </p>
 
               <div className="flex gap-3 w-full">
@@ -103,14 +105,14 @@ export default function TutorialOverlay() {
                   onClick={handleSkip}
                   className="flex-1 py-2 rounded-lg font-serif font-bold text-xs uppercase tracking-widest text-[#c89f59] hover:bg-white/5 transition-colors focus:outline-none"
                 >
-                  Skip
+                  {t.tutorial.skip}
                 </button>
                 <button 
                   onClick={handleNext}
                   className="flex-[2] py-2 rounded-lg font-serif font-black text-xs uppercase tracking-widest text-[#140b06] shadow-md active:scale-95 transition-all focus:outline-none"
                   style={{ background: 'linear-gradient(180deg, #ffe58f, #d4af37)' }}
                 >
-                  {stepIndex === TUTORIAL_STEPS.length - 1 ? "Let's Play!" : 'Next'}
+                  {stepIndex === TUTORIAL_STEPS.length - 1 ? t.tutorial.letsPlay : t.tutorial.next}
                 </button>
               </div>
 

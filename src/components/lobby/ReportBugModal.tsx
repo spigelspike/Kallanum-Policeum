@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { playClick } from '../../utils/sounds'
 import { useProfileStore } from '../../stores/profileStore'
+import { useLanguageStore } from '../../stores/languageStore'
 
 interface ReportBugModalProps {
   onClose: () => void
@@ -13,6 +14,7 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
   const [success, setSuccess] = useState(false)
   
   const { name } = useProfileStore()
+  const { t } = useLanguageStore()
 
   async function handleSubmit() {
     playClick()
@@ -94,10 +96,10 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
-                Report a Bug
+                {t.bugReport.title}
               </h2>
               <p className="text-xs text-[#c89f59] text-center font-serif tracking-wider mb-6 opacity-80">
-                Help us improve the game!
+                {t.bugReport.subtitle}
               </p>
 
               {success ? (
@@ -107,8 +109,8 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                  <p className="text-green-400 font-serif font-bold text-lg">Report Submitted!</p>
-                  <p className="text-green-400/70 text-sm mt-1">Thank you for your help.</p>
+                  <p className="text-green-400 font-serif font-bold text-lg">{t.bugReport.success}</p>
+                  <p className="text-green-400/70 text-sm mt-1">{t.bugReport.successSub}</p>
                 </div>
               ) : (
                 <div className="w-full space-y-4">
@@ -117,7 +119,7 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
                     boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.9), 0 1px 0 rgba(200,159,89,0.1)',
                   }}>
                     <textarea
-                      placeholder="Describe what went wrong..."
+                      placeholder={t.bugReport.placeholder}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={5}
@@ -147,7 +149,7 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
                         color: '#c89f59',
                       }}
                     >
-                      Cancel
+                      {t.common.cancel}
                     </button>
 
                     <button
@@ -160,7 +162,7 @@ export default function ReportBugModal({ onClose }: ReportBugModalProps) {
                         boxShadow: 'inset 0 1px 1px rgba(255,229,143,0.5), 0 4px 10px rgba(0,0,0,0.5)'
                       }}
                     >
-                      {loading ? 'Submitting...' : 'Submit Report'}
+                      {loading ? t.bugReport.submitting : t.bugReport.submit}
                     </button>
                   </div>
 

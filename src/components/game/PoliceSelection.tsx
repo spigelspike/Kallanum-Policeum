@@ -3,6 +3,7 @@ import { useGameStore } from '../../stores/gameStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { supabase } from '../../lib/supabase'
+import { useLanguageStore } from '../../stores/languageStore'
 
 interface PoliceSelectionProps {
   selectedId: string | null
@@ -16,6 +17,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const policeId = useGameStore((s) => s.policeId)
   const { avatar: myAvatar } = useProfileStore()
+  const { t } = useLanguageStore()
 
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -73,7 +75,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
         boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
       }}>
         <span className="font-serif text-orange-300 text-xs sm:text-sm font-bold tracking-wider animate-pulse">
-          Accusation submitted! Revealing result...
+          {t.game.accusationSubmitted}
         </span>
       </div>
     )
@@ -106,7 +108,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
           </div>
 
           <p className="font-serif text-sm text-[#c89f59] text-center">
-            Accuse <span className="font-black text-[#ffe58f]">{selectedPlayer.username}</span> of being the Thief?
+            {t.game.accusePrompt.replace('{{name}}', selectedPlayer.username)}
           </p>
 
           <div className="flex gap-3 w-full">
@@ -121,7 +123,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
                 color: '#c89f59',
               }}
             >
-              <span className="font-serif font-bold text-xs uppercase tracking-widest">Cancel</span>
+              <span className="font-serif font-bold text-xs uppercase tracking-widest">{t.common.cancel}</span>
             </button>
 
             {/* Confirm */}
@@ -142,7 +144,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}>
-                  {loading ? 'Submitting...' : 'Confirm Accusation'}
+                  {loading ? t.game.submittingAccusation : t.game.confirmAccusation}
                 </span>
               </div>
             </button>
@@ -161,7 +163,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
         boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
       }}>
         <span className="font-serif text-[#c89f59] text-xs sm:text-sm italic tracking-wide animate-pulse">
-          Tap a player on the table to accuse them...
+          {t.game.tapToAccuse}
         </span>
       </div>
       {error && (

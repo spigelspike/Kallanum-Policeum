@@ -49,6 +49,11 @@ Deno.serve(async (req) => {
   if (!players || !players.length) return jsonSuccess({ success: true, abandoned: true, newHostId: null }, cors);
 
   const newHost = players[0];
+
+  if (user.id !== newHost.player_id) {
+    return jsonError("Only the next eligible host can initiate a host transfer", cors, 403);
+  }
+
   await admin.from("rooms").update({ host_id: newHost.player_id }).eq("id", roomId);
   await admin.from("room_players").update({ is_connected: false }).eq("room_id", roomId).eq("player_id", disconnectedHostId);
 

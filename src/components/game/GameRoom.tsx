@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useGameStore } from '../../stores/gameStore'
 import { useRealtimeRoom } from '../../hooks/useRealtimeRoom'
+import { useLanguageStore } from '../../stores/languageStore'
 import WaitingLobby from './WaitingLobby'
 import RoleReveal from './RoleReveal'
 import DiscussionPhase from './DiscussionPhase'
@@ -15,6 +16,7 @@ export default function GameRoom() {
 
   const room = useGameStore((s) => s.room)
   const phase = room?.phase ?? null
+  const { t } = useLanguageStore()
 
 
   // Connect to realtime channel
@@ -26,7 +28,7 @@ export default function GameRoom() {
   // Redirect if no room data (e.g. direct URL access without joining)
   useEffect(() => {
     if (!room) {
-      navigate('/')
+      navigate('/not-found')
     }
   }, [room, navigate])
 
@@ -50,7 +52,7 @@ export default function GameRoom() {
             connected ? 'bg-emerald-400' : 'bg-red-400'
           }`}
         />
-        {connected ? 'Connected' : `Reconnecting... (${status})`}
+        {connected ? t.common.connected : `${t.common.reconnecting} (${status})`}
       </div>
 
       {/* Voice Chat System */}

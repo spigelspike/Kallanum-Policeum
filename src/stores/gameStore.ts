@@ -162,7 +162,7 @@ export const useGameStore = create<GameState>((set) => ({
     if (!msg.id.startsWith('temp-')) {
       const tempIndex = state.worldChatMessages.findIndex(m => 
         m.id.startsWith('temp-') && 
-        m.playerId === msg.playerId && 
+        (m.playerId === msg.playerId || m.username === msg.username) && 
         m.message === msg.message
       )
       if (tempIndex !== -1) {

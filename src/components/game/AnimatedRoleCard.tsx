@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { playFlip, playReveal } from '../../utils/sounds'
+import { useLanguageStore } from '../../stores/languageStore'
 import coverCardImg from '../../assets/cover_card.webp'
 import revealCardImg from '../../assets/reveal_card.webp'
 
@@ -13,6 +14,7 @@ interface AnimatedRoleCardProps {
 export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRoleCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [showRoleText, setShowRoleText] = useState(false)
+  const { t } = useLanguageStore()
 
   // Trigger role text fade-in after flip animation completes
   useEffect(() => {
@@ -85,7 +87,7 @@ export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRo
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
                 <span className="font-serif text-[#ffe58f] text-sm tracking-[0.3em] uppercase drop-shadow-md">
-                  Tap to Reveal
+                  {t.game.tapToReveal}
                 </span>
               </motion.div>
             )}
@@ -116,7 +118,7 @@ export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRo
                   className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center"
                 >
                   <p className="font-serif text-xs uppercase tracking-[0.4em] mb-3 text-[#d4af37] opacity-80">
-                    Your Role
+                    {t.game.yourRole}
                   </p>
                   
                   <h2 className="font-serif font-black text-4xl sm:text-5xl tracking-wider mb-2" style={{
@@ -125,12 +127,12 @@ export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRo
                     WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 4px 12px rgba(212,175,55,0.4))',
                   }}>
-                    {role}
+                    {t.roles[role.toLowerCase() as keyof typeof t.roles] || role}
                   </h2>
 
                   {(points ?? 0) > 0 && (
                     <p className="font-serif text-lg text-[#ffe58f] drop-shadow-md mt-2">
-                      {points} points/round
+                      {points} {t.game.pointsPerRound}
                     </p>
                   )}
 
@@ -140,7 +142,7 @@ export default function AnimatedRoleCard({ role, points, onDismiss }: AnimatedRo
                     transition={{ delay: 1, duration: 1 }}
                     className="absolute bottom-6 font-serif text-[10px] tracking-widest text-[#c89f59] uppercase"
                   >
-                    Tap to Continue
+                    {t.game.tapToContinue}
                   </motion.p>
                 </motion.div>
               )}

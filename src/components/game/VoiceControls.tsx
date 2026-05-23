@@ -1,8 +1,10 @@
 import { useVoiceStore } from '../../stores/voiceStore'
+import { useLanguageStore } from '../../stores/languageStore'
 import { playClick } from '../../utils/sounds'
 
 export default function VoiceControls() {
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceStore()
+  const { t } = useLanguageStore()
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -15,7 +17,7 @@ export default function VoiceControls() {
             ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
             : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'
         }`}
-        title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+        title={isMuted ? t.game.unmuteMicrophone : t.game.muteMicrophone}
       >
         {isMuted ? (
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -43,7 +45,7 @@ export default function VoiceControls() {
             ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
             : 'bg-white/10 text-white/80 border border-white/20 hover:bg-white/20'
         }`}
-        title={isDeafened ? "Undeafen" : "Deafen"}
+        title={isDeafened ? t.game.undeafen : t.game.deafen}
       >
         {isDeafened ? (
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

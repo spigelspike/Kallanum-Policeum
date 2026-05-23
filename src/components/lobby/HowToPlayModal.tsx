@@ -1,11 +1,13 @@
-
 import { playClick } from '../../utils/sounds'
+import { useLanguageStore } from '../../stores/languageStore'
 
 interface HowToPlayModalProps {
   onClose: () => void
 }
 
 export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
+  const { t } = useLanguageStore()
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" style={{ animation: 'fadeIn 0.3s ease-out forwards' }}>
       
@@ -76,22 +78,20 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                       WebkitTextFillColor: 'transparent',
                       filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
                     }}>
-                      How to Play
+                      {t.rules.title}
                     </h2>
 
                     <div className="space-y-6 w-full text-center">
 
                       {/* Goal Section */}
                       <div>
-                        <SectionLabel text="The Goal" />
-                        <p className="font-serif text-sm text-[#ffe58f] leading-relaxed opacity-90 px-2">
-                          Kallanum Policeum (Thief and Police) is a game of deduction and deception. The <span className="text-blue-400 font-bold">Police</span> must find the hidden <span className="text-red-400 font-bold">Thief</span> among the players.
-                        </p>
+                        <SectionLabel text={t.rules.theGoal} />
+                        <p className="font-serif text-sm text-[#ffe58f] leading-relaxed opacity-90 px-2" dangerouslySetInnerHTML={{ __html: t.rules.goalDesc }} />
                       </div>
 
                       {/* Roles Section */}
                       <div>
-                        <SectionLabel text="The Roles" />
+                        <SectionLabel text={t.rules.theRoles} />
                         
                         <div className="space-y-4 mt-4">
                           
@@ -103,8 +103,8 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                               </svg>
                             </div>
                             <div className="text-left flex-1">
-                              <h3 className="font-serif font-bold text-blue-400 text-base uppercase tracking-widest mb-1">Police</h3>
-                              <p className="font-serif text-xs text-blue-200/80 leading-relaxed">Your identity is public. Question others and use your deduction skills to tap the player you believe is the Thief.</p>
+                              <h3 className="font-serif font-bold text-blue-400 text-base uppercase tracking-widest mb-1">{t.roles.police}</h3>
+                              <p className="font-serif text-xs text-blue-200/80 leading-relaxed">{t.rules.policeDesc}</p>
                             </div>
                           </div>
 
@@ -118,8 +118,8 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                               </svg>
                             </div>
                             <div className="text-left flex-1">
-                              <h3 className="font-serif font-bold text-red-400 text-base uppercase tracking-widest mb-1">Thief</h3>
-                              <p className="font-serif text-xs text-red-200/80 leading-relaxed">Stay hidden! Lie, deflect, and act innocent. If the Police accuses the wrong person, you win and earn 500 points.</p>
+                              <h3 className="font-serif font-bold text-red-400 text-base uppercase tracking-widest mb-1">{t.roles.kallan}</h3>
+                              <p className="font-serif text-xs text-red-200/80 leading-relaxed">{t.rules.thiefDesc}</p>
                             </div>
                           </div>
 
@@ -131,8 +131,8 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                               </svg>
                             </div>
                             <div className="text-left flex-1">
-                              <h3 className="font-serif font-bold text-[#c89f59] text-base uppercase tracking-widest mb-1">Civilian</h3>
-                              <p className="font-serif text-xs text-[#c89f59]/80 leading-relaxed">Tell the truth and help the Police find the Thief. Be careful not to act suspicious, or the Police might accuse you!</p>
+                              <h3 className="font-serif font-bold text-[#c89f59] text-base uppercase tracking-widest mb-1">{t.rules.civilianRole}</h3>
+                              <p className="font-serif text-xs text-[#c89f59]/80 leading-relaxed">{t.rules.civilianDesc}</p>
                             </div>
                           </div>
 
@@ -160,7 +160,7 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                           WebkitTextFillColor: 'transparent',
                           filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
                         }}>
-                          Close
+                          {t.common.close}
                         </span>
                       </div>
                     </button>

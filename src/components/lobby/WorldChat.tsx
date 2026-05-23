@@ -3,6 +3,7 @@ import { getAblyClient } from '../../lib/ably'
 import { supabase } from '../../lib/supabase'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
+import { useLanguageStore } from '../../stores/languageStore'
 
 
 export default function WorldChat() {
@@ -15,6 +16,7 @@ export default function WorldChat() {
     myPlayerId,
   } = useGameStore()
   const { name } = useProfileStore()
+  const { t } = useLanguageStore()
 
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -195,7 +197,7 @@ export default function WorldChat() {
         body: { messageId },
         headers: { Authorization: `Bearer ${token}` }
       })
-      alert('Message reported. Our team will review it.')
+      alert(t.chat.reportSuccess)
     } catch (err) {
       console.error(err)
     } finally {
@@ -211,11 +213,11 @@ export default function WorldChat() {
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
           </svg>
-          World Chat
+          {t.chat.worldChat}
         </h2>
         <div className="flex items-center gap-2 text-xs text-[#c89f59]/80 font-medium bg-[#0d0704] px-2 py-1 rounded border border-[#5a3e15]/30">
           <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></span>
-          {worldChatOnlineCount} online
+          {worldChatOnlineCount} {t.chat.online}
         </div>
       </div>
 
@@ -240,25 +242,25 @@ export default function WorldChat() {
             <svg className="w-12 h-12 text-[#c89f59] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <p className="text-[#c89f59] font-medium text-sm">No messages yet.<br/>Be the first to say hello!</p>
+            <p className="text-[#c89f59] font-medium text-sm">{t.chat.noMessages}<br/>{t.chat.beFirst}</p>
           </div>
         ) : (
           worldChatMessages.map((msg, idx) => {
-            const isMe = msg.playerId === myPlayerId
+            const isMe = msg.playerId === myPlayerId || msg.username === name
             const showHeader = idx === 0 || worldChatMessages[idx - 1].playerId !== msg.playerId || msg.timestamp - worldChatMessages[idx - 1].timestamp > 60000
 
             // Format relative time (e.g. "2m ago", "just now")
             const diffMs = Date.now() - msg.timestamp
-            let timeStr = 'just now'
-            if (diffMs > 3600000) timeStr = `${Math.floor(diffMs / 3600000)}h ago`
-            else if (diffMs > 60000) timeStr = `${Math.floor(diffMs / 60000)}m ago`
+            let timeStr = t.chat.justNow
+            if (diffMs > 3600000) timeStr = `${Math.floor(diffMs / 3600000)}${t.chat.hours} ${t.chat.ago}`
+            else if (diffMs > 60000) timeStr = `${Math.floor(diffMs / 60000)}${t.chat.minutes} ${t.chat.ago}`
 
             return (
               <div key={msg.id} className={`flex flex-col group ${isMe ? 'items-end' : 'items-start'}`}>
                 {showHeader && (
                   <div className="flex items-baseline gap-2 mb-1 px-1">
                     {!isMe && <span className="text-[11px] font-bold" style={{ color: getUsernameColor(msg.playerId) }}>{msg.username}</span>}
-                    {isMe && <span className="text-[11px] font-bold text-[#c89f59]">You</span>}
+                    {isMe && <span className="text-[11px] font-bold text-[#c89f59]">{t.chat.you}</span>}
                     <span className="text-[9px] text-white/30 font-medium">{timeStr}</span>
                   </div>
                 )}
@@ -269,7 +271,7 @@ export default function WorldChat() {
                       onClick={() => handleReport(msg.id)}
                       disabled={reportingId === msg.id}
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-white/20 hover:text-red-400 focus:outline-none"
-                      title="Report message"
+                      title={t.chat.reportMessage}
                     >
                       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
@@ -305,7 +307,7 @@ export default function WorldChat() {
               value={input}
               onChange={(e) => setInput(e.target.value.slice(0, 200))}
               onKeyDown={handleKeyDown}
-              placeholder="Say something to the world..."
+              placeholder={t.chat.saySomething}
               disabled={sending}
               rows={input.split('\n').length > 1 ? Math.min(input.split('\n').length, 3) : 1}
               className="w-full bg-[#0a0604] border border-[#5a3e15]/50 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/30 transition-all resize-none overflow-hidden"

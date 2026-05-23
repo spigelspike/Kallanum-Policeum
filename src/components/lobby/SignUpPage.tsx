@@ -2,12 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import signupBg from '../../assets/signup_bg.webp'
 import signupBgDesktop from '../../assets/signup_bg_desktop.webp'
 import typoLogo from '../../assets/typo_logo.webp'
+import LanguageToggle from '../common/LanguageToggle'
+import { useLanguageStore } from '../../stores/languageStore'
 
 export default function SignUpPage() {
   const navigate = useNavigate()
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <LanguageToggle />
 
       {/* ── Backgrounds ── */}
       <div
@@ -69,6 +72,7 @@ export default function SignUpPage() {
 
 function GuestButton({ onClick, size }: { onClick: () => void; size: 'mobile' | 'desktop' }) {
   const isDesktop = size === 'desktop'
+  const { t } = useLanguageStore()
   return (
     <button
       onClick={onClick}
@@ -84,10 +88,10 @@ function GuestButton({ onClick, size }: { onClick: () => void; size: 'mobile' | 
         </div>
         <div className="flex flex-col items-center flex-grow">
           <span className={`text-white font-black tracking-tight drop-shadow-md leading-tight ${isDesktop ? 'text-2xl' : 'text-[17px]'}`}>
-            CONTINUE AS GUEST
+            {t.signup.guest}
           </span>
           <span className={`text-amber-100 font-bold tracking-widest uppercase leading-tight mt-0.5 ${isDesktop ? 'text-[13px]' : 'text-[10px]'}`}>
-            JUMP INTO THE ACTION
+            {t.signup.guestSub}
           </span>
         </div>
         <div className={`flex-shrink-0 opacity-0 ${isDesktop ? 'w-12' : 'w-9'}`} />
@@ -98,6 +102,7 @@ function GuestButton({ onClick, size }: { onClick: () => void; size: 'mobile' | 
 
 function GoogleButton({ onClick, size }: { onClick: () => void; size: 'mobile' | 'desktop' }) {
   const isDesktop = size === 'desktop'
+  const { t } = useLanguageStore()
   return (
     <button
       onClick={onClick}
@@ -116,10 +121,10 @@ function GoogleButton({ onClick, size }: { onClick: () => void; size: 'mobile' |
         </div>
         <div className="flex flex-col items-center flex-grow">
           <span className={`text-[#2d2d2d] font-black tracking-tight leading-tight ${isDesktop ? 'text-2xl' : 'text-[17px]'}`}>
-            SIGN UP WITH GOOGLE
+            {t.signup.google}
           </span>
           <span className={`text-gray-500 font-bold tracking-widest uppercase leading-tight mt-0.5 ${isDesktop ? 'text-[13px]' : 'text-[10px]'}`}>
-            QUICK, SAFE &amp; SECURE
+            {t.signup.googleSub}
           </span>
         </div>
         <div className={`flex-shrink-0 opacity-0 ${isDesktop ? 'w-12' : 'w-[30px]'}`} />
@@ -129,11 +134,12 @@ function GoogleButton({ onClick, size }: { onClick: () => void; size: 'mobile' |
 }
 
 function TermsText() {
+  const { t } = useLanguageStore()
   return (
     <div className="text-center text-[#d0c8b8] text-[12px] md:text-[13px] mt-2 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-      By continuing, you agree to our{' '}
+      {t.signup.terms.split(',')[0]},{' '}
       <a href="#" className="text-[#c1923e] hover:text-[#dca94b] transition-colors">Terms of Service</a>
-      {' '}and{' '}
+      {' '}&amp;{' '}
       <a href="#" className="text-[#c1923e] hover:text-[#dca94b] transition-colors">Privacy Policy</a>
     </div>
   )

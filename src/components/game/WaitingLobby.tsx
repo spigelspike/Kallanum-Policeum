@@ -1,19 +1,24 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
 import { useSoundStore } from '../../stores/soundStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { playClick } from '../../utils/sounds'
 import { supabase } from '../../lib/supabase'
+import { useLanguageStore } from '../../stores/languageStore'
 import lobbyBgMobile from '../../assets/lobby.webp'
 import lobbyBgDesktop from '../../assets/lobby_desktop.webp'
 import bgMusic from '../../assets/sound/game_bg.mp3'
 
 export default function WaitingLobby() {
+  const navigate = useNavigate()
   const room = useGameStore((s) => s.room)
   const players = useGameStore((s) => s.players)
   const myPlayerId = useGameStore((s) => s.myPlayerId)
+  const resetStore = useGameStore((s) => s.reset)
   const { avatar: myAvatar } = useProfileStore()
+  const { t } = useLanguageStore()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +65,26 @@ export default function WaitingLobby() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function handleExit() {
+    playClick()
+    if (!room) return
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await supabase.functions.invoke('leave-room', {
+          body: { roomId: room.id },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+      }
+    } catch (e) {
+      console.error("Error leaving room:", e)
+    } finally {
+      resetStore()
+      navigate('/home')
+    }
+  }
+
   if (!room) return null
 
   const roomCodeChars = room.code.split('')
@@ -78,6 +103,18 @@ export default function WaitingLobby() {
         className="md:hidden absolute inset-0 bg-cover bg-center opacity-80" 
         style={{ backgroundImage: `url(${lobbyBgMobile})` }} 
       />
+
+      {/* Exit Button */}
+      <button
+        onClick={handleExit}
+        disabled={loading}
+        className="absolute top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/10 hover:bg-red-900/50 hover:border-red-500/50 transition-all text-white/80 hover:text-red-400"
+        title="Leave Room"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
       
       {/* ── THE PLATE ── */}
       <div className="w-full max-w-[540px] relative z-10 animate-in zoom-in-95 duration-500">
@@ -144,7 +181,7 @@ export default function WaitingLobby() {
                   <div className="relative z-10 px-6 sm:px-10 pt-12 pb-6 flex flex-col items-center">
                     
                     {/* ROOM CODE */}
-                    <SectionDivider text="ROOM CODE" />
+                    <SectionDivider text={t.lobby.roomCode} />
                     <div className="flex justify-center gap-1.5 sm:gap-2 mb-2 mt-2">
                       {roomCodeChars.map((char, i) => (
                         <div key={i} className="w-10 h-12 sm:w-12 sm:h-14 rounded-md flex items-center justify-center border" style={{
@@ -171,7 +208,7 @@ export default function WaitingLobby() {
                         title="Copy Room Code"
                       >
                         <p className="text-[10px] sm:text-xs text-[#c89f59] font-serif italic tracking-wide">
-                          {copied ? 'Copied to clipboard!' : 'Share this code with friends to join'}
+                          {copied ? t.lobby.copied : t.lobby.shareCode}
                         </p>
                         {!copied && (
                           <svg className="w-3 h-3 text-[#c89f59]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,7 +220,7 @@ export default function WaitingLobby() {
                     </div>
 
                     {/* PLAYERS LIST */}
-                    <SectionDivider text={`PLAYERS (${playerCount}/${room.totalRounds > 0 ? 15 : 15})`} />
+                    <SectionDivider text={`${t.lobby.players} (${playerCount}/${room.totalRounds > 0 ? 15 : 15})`} />
                     
                     <div className="w-full space-y-2 mt-2 mb-6 max-h-[35vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#5a3e15] scrollbar-track-transparent">
                       {players.map((player) => {
@@ -220,7 +257,7 @@ export default function WaitingLobby() {
                                 <svg className="w-3 h-3 text-[#d4af37]" viewBox="0 0 48 36" fill="currentColor">
                                   <path d="M24 0L28 14L36 6L32 20H16L12 6L20 14L24 0Z" />
                                 </svg>
-                                <span className="text-[9px] sm:text-[10px] font-bold text-[#d4af37] tracking-widest uppercase">Host</span>
+                                <span className="text-[9px] sm:text-[10px] font-bold text-[#d4af37] tracking-widest uppercase">{t.lobby.host}</span>
                               </div>
                             )}
                           </div>
@@ -236,13 +273,13 @@ export default function WaitingLobby() {
                             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                           </svg>
                           <span className="text-[#ff8f8f] font-serif text-xs sm:text-sm drop-shadow-md">
-                            Need at least 3 players to start (currently {playerCount})
+                            {t.lobby.needPlayers} ({playerCount})
                           </span>
                         </div>
                       ) : !isHost ? (
                         <div className="w-full text-center py-2">
                           <span className="text-[#c89f59] font-serif text-xs sm:text-sm italic drop-shadow-md">
-                            Waiting for host to start the game...
+                            {t.lobby.waitingForHost}
                           </span>
                         </div>
                       ) : null}
@@ -274,7 +311,7 @@ export default function WaitingLobby() {
                             WebkitTextFillColor: 'transparent',
                             filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
                           }}>
-                            {loading ? 'Starting...' : `Start Game (${playerCount} Players)`}
+                            {loading ? t.lobby.starting : `${t.lobby.startGame} (${playerCount})`}
                           </span>
 
                           {/* Right Mask Icon */}

@@ -15,6 +15,8 @@ import typoLogo from '../../assets/typo_logo.webp'
 import bgMusic from '../../assets/sound/game_bg.mp3'
 
 import WorldChat from './WorldChat'
+import LanguageToggle from '../common/LanguageToggle'
+import { useLanguageStore } from '../../stores/languageStore'
 
 // ... existing imports ...
 
@@ -25,9 +27,9 @@ export default function HomeScreen() {
   const navigate = useNavigate()
   const { loading, error, createRoom, joinRoom } = useRoom()
 
-  // Profile Store
   const { hasProfile, name, avatar } = useProfileStore()
   const { myPlayerId, setMyPlayerId } = useGameStore()
+  const { t } = useLanguageStore()
 
   useEffect(() => {
     if (hasProfile && !myPlayerId) {
@@ -40,6 +42,12 @@ export default function HomeScreen() {
       })
     }
   }, [hasProfile, myPlayerId, name, setMyPlayerId])
+
+  useEffect(() => {
+    if (error === "Room not found." || error === "This room has already started." || error === "This room has expired") {
+      navigate('/not-found')
+    }
+  }, [error, navigate])
 
   const [mode, setMode] = useState<Mode>('idle')
   const [mobileTab, setMobileTab] = useState<MobileTab>('play')
@@ -116,8 +124,10 @@ export default function HomeScreen() {
       {/* --- Layout Wrapper --- */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8 px-4 sm:px-6 md:py-12 md:px-8">
 
+        <LanguageToggle />
+
         {/* Absolute Mute Toggle Button */}
-        <div className="absolute top-4 right-4 md:right-auto md:left-4 z-50">
+        <div className="absolute top-4 right-4 z-50">
           <button 
             onClick={() => {
               playClick()
@@ -146,7 +156,7 @@ export default function HomeScreen() {
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/>
             </svg>
-            Report Bug
+            {t.home.reportBug}
           </button>
         </div>
 
@@ -174,8 +184,8 @@ export default function HomeScreen() {
                 {/* Create Room Button (Blue) */}
                 <MainButton
                   onClick={() => { playClick(); setMode('create') }}
-                  title="CREATE ROOM"
-                  subtitle="CREATE YOUR OWN ROOM"
+                  title={t.home.createRoom}
+                  subtitle={t.home.createRoomSub}
                   gradientOuter="from-[#2970d1] to-[#072457]"
                   gradientInner="from-[#1b5cb1] to-[#124285]"
                   shadow="shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
@@ -189,8 +199,8 @@ export default function HomeScreen() {
                 {/* Join Room Button (Purple) */}
                 <MainButton
                   onClick={() => { playClick(); setMode('join') }}
-                  title="JOIN ROOM"
-                  subtitle="JOIN WITH ROOM CODE"
+                  title={t.home.joinRoom}
+                  subtitle={t.home.joinRoomSub}
                   gradientOuter="from-[#7c33b3] to-[#270b47]"
                   gradientInner="from-[#602193] to-[#401369]"
                   shadow="shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
@@ -204,8 +214,8 @@ export default function HomeScreen() {
                 {/* How To Play Button (Gold/Brown) */}
                 <MainButton
                   onClick={() => { playClick(); setShowHowToPlay(true) }}
-                  title="HOW TO PLAY"
-                  subtitle="LEARN THE RULES"
+                  title={t.home.howToPlay}
+                  subtitle={t.home.howToPlaySub}
                   gradientOuter="from-[#a67c00] to-[#5a3e15]"
                   gradientInner="from-[#8a6b20] to-[#3f2a0d]"
                   shadow="shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
@@ -288,7 +298,7 @@ export default function HomeScreen() {
                               WebkitTextFillColor: 'transparent',
                               filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
                             }}>
-                              {mode === 'create' ? 'Create a Room' : 'Join a Room'}
+                              {mode === 'create' ? t.home.createRoom : t.home.joinRoom}
                             </h2>
 
                             <div className="w-full space-y-6">
@@ -297,7 +307,7 @@ export default function HomeScreen() {
                               {mode === 'create' && (
                                 <div className="w-full px-2 mb-2">
                                   <label htmlFor="totalRounds" className="block text-[11px] font-serif font-bold text-[#c89f59] uppercase tracking-[0.25em] mb-2 drop-shadow-md">
-                                    Number of Rounds
+                                    {t.home.roundsLabel}
                                   </label>
                                   <div className="relative rounded-lg overflow-hidden" style={{
                                     boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.9), inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(200,159,89,0.1)',
@@ -313,7 +323,7 @@ export default function HomeScreen() {
                                     >
                                       {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                                         <option key={n} value={n} className="bg-slate-900 text-white">
-                                          {n} {n === 1 ? 'ROUND' : 'ROUNDS'}
+                                          {n} {n === 1 ? t.game.round : t.home.roundsLabel}
                                         </option>
                                       ))}
                                     </select>
@@ -331,7 +341,7 @@ export default function HomeScreen() {
                               {mode === 'join' && (
                                 <div className="w-full px-2 mb-2">
                                   <label htmlFor="roomCode" className="block text-[11px] font-serif font-bold text-[#c89f59] uppercase tracking-[0.25em] mb-2 drop-shadow-md">
-                                    Room Code
+                                    {t.home.roomCodeLabel}
                                   </label>
                                   <div className="relative rounded-lg overflow-hidden" style={{
                                     boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.9), inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(200,159,89,0.1)',
@@ -340,7 +350,7 @@ export default function HomeScreen() {
                                       id="roomCode"
                                       type="text"
                                       maxLength={6}
-                                      placeholder="ABC123"
+                                      placeholder={t.home.roomCodePlaceholder}
                                       value={roomCode}
                                       onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                                       className="w-full pl-5 pr-12 py-3.5 bg-transparent text-[#ffe58f] placeholder-[#5a4229] text-center font-serif tracking-widest text-lg focus:outline-none transition-all uppercase"
@@ -381,7 +391,7 @@ export default function HomeScreen() {
                                 color: '#c89f59',
                                 borderRadius: '8px',
                               }}>
-                                Back
+                                {t.common.back}
                               </div>
                             </button>
 
@@ -404,7 +414,7 @@ export default function HomeScreen() {
                                   WebkitTextFillColor: 'transparent',
                                   filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
                                 }}>
-                                  {loading ? '...' : mode === 'create' ? 'Create' : 'Join'}
+                                  {loading ? t.common.loading : mode === 'create' ? t.home.createButton : t.home.joinButton}
                                 </span>
                               </div>
                             </button>
@@ -454,29 +464,35 @@ export default function HomeScreen() {
       <div className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-40">
         <button
           onClick={() => { playClick(); setIsChatOpen(!isChatOpen) }}
-          className={`flex flex-col items-center gap-3 py-6 px-3 bg-[#1a120e]/90 backdrop-blur-md border border-r-0 border-[#5a3e15] rounded-l-xl hover:bg-[#2a1a12] transition-all shadow-[-5px_0_20px_rgba(0,0,0,0.6)] ${isChatOpen ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
+          className={`flex flex-col items-center justify-center gap-4 py-6 w-12 bg-[#1a120e]/90 backdrop-blur-md border border-r-0 border-[#5a3e15] rounded-l-xl hover:bg-[#2a1a12] transition-all shadow-[-5px_0_20px_rgba(0,0,0,0.6)] ${isChatOpen ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
           style={{ transitionDuration: '300ms' }}
         >
-          <svg className="w-6 h-6 text-[#d4af37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg className="w-5 h-5 text-[#d4af37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <span className="[writing-mode:vertical-rl] rotate-180 font-black tracking-widest text-[#ffe58f] uppercase text-xs">
-            World Chat
-          </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></span>
+          
+          <div className="relative w-full h-[90px] flex items-center justify-center">
+            <span className="absolute font-black tracking-widest text-[#ffe58f] uppercase text-xs whitespace-nowrap -rotate-90">
+              World Chat
+            </span>
+          </div>
+
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse flex-shrink-0"></span>
         </button>
       </div>
 
       {/* Drawer */}
       <div className={`hidden md:block fixed top-0 right-0 h-full w-[400px] z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-[-10px_0_40px_rgba(0,0,0,0.8)] ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <button 
-          onClick={() => { playClick(); setIsChatOpen(false) }}
-          className="absolute top-1/2 -left-10 -translate-y-1/2 w-10 h-20 bg-[#1a120e] border border-r-0 border-[#5a3e15] rounded-l-xl flex items-center justify-center text-[#d4af37] hover:bg-[#2a1a12] transition-colors shadow-[-5px_0_15px_rgba(0,0,0,0.5)]"
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {isChatOpen && (
+          <button 
+            onClick={() => { playClick(); setIsChatOpen(false) }}
+            className="absolute top-1/2 -left-10 -translate-y-1/2 w-10 h-20 bg-[#1a120e] border border-r-0 border-[#5a3e15] rounded-l-xl flex items-center justify-center text-[#d4af37] hover:bg-[#2a1a12] transition-colors shadow-[-5px_0_15px_rgba(0,0,0,0.5)]"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
         <div className="h-full bg-slate-950">
           <WorldChat />
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useProfileStore } from '../../stores/profileStore'
 import { avatarUrlToKey } from '../../utils/avatarMap'
 import { playClick } from '../../utils/sounds'
+import { useLanguageStore } from '../../stores/languageStore'
 import male1 from '../../assets/avatar/male1.webp'
 import male2 from '../../assets/avatar/male2.webp'
 import male3 from '../../assets/avatar/male3.webp'
@@ -16,6 +17,7 @@ const AVATARS = {
 
 export default function CreateProfileModal() {
   const { setProfile } = useProfileStore()
+  const { t } = useLanguageStore()
 
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female' | null>(null)
@@ -128,14 +130,14 @@ export default function CreateProfileModal() {
                       WebkitTextFillColor: 'transparent',
                       filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
                     }}>
-                      Create<br />Profile
+                      {t.profile.title.split(' ')[0]}<br />{t.profile.title.split(' ').slice(1).join(' ')}
                     </h2>
 
                     {/* ── Select Gender ── */}
-                    <SectionLabel text="Select Gender" />
+                    <SectionLabel text={t.profile.selectGender} />
                     <div className="flex gap-3 w-full px-2 mb-7">
-                      <GenderButton label="Male" active={gender === 'male'} onClick={() => handleGenderSelect('male')} />
-                      <GenderButton label="Female" active={gender === 'female'} onClick={() => handleGenderSelect('female')} />
+                      <GenderButton label={t.profile.male} active={gender === 'male'} onClick={() => handleGenderSelect('male')} />
+                      <GenderButton label={t.profile.female} active={gender === 'female'} onClick={() => handleGenderSelect('female')} />
                     </div>
 
                     {/* ── Choose Avatar ── */}
@@ -168,7 +170,7 @@ export default function CreateProfileModal() {
                     </div>
 
                     {/* ── Your Name ── */}
-                    <SectionLabel text="Your Name" />
+                    <SectionLabel text={t.profile.yourName} />
                     <div className="w-full px-2 mb-2">
                       <div className="relative rounded-lg overflow-hidden" style={{
                         boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.9), inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(200,159,89,0.1)',
@@ -177,7 +179,7 @@ export default function CreateProfileModal() {
                           id="profileName"
                           type="text"
                           maxLength={20}
-                          placeholder="Enter your game name"
+                          placeholder={t.profile.placeholder}
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           className="w-full pl-5 pr-12 py-3.5 bg-transparent text-[#ffe58f] placeholder-[#5a4229] text-center font-serif tracking-widest text-lg focus:outline-none transition-all"
@@ -220,13 +222,13 @@ export default function CreateProfileModal() {
                         background: 'linear-gradient(180deg, #c9a033 0%, #9a7220 40%, #7a5a18 100%)',
                         boxShadow: 'inset 0 1px 1px rgba(255,229,143,0.5), inset 0 -2px 4px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.7)',
                       }}>
-                        <span className="font-serif font-black text-xl tracking-[0.25em] uppercase" style={{
+                        <span className="font-serif font-black text-[15px] tracking-[0.2em] uppercase whitespace-nowrap" style={{
                           background: 'linear-gradient(180deg, #fff8e1 0%, #ffe58f 50%, #d4af37 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
                         }}>
-                          Let's Go!
+                          {t.profile.saveProfile}
                         </span>
                       </div>
                     </button>

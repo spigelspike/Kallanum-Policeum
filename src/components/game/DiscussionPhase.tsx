@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '../../stores/gameStore'
 import { supabase } from '../../lib/supabase'
 import { playEmote, playClick } from '../../utils/sounds'
+import { useLanguageStore } from '../../stores/languageStore'
 import GameTableLayout from './GameTableLayout'
 import PoliceSelection from './PoliceSelection'
 import TutorialOverlay from './TutorialOverlay'
@@ -15,6 +16,7 @@ export default function DiscussionPhase() {
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const myRole = useGameStore((s) => s.myRole)
   const myRolePoints = useGameStore((s) => s.myRolePoints)
+  const { t } = useLanguageStore()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -97,7 +99,7 @@ export default function DiscussionPhase() {
         boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
       }}>
         <span className="font-serif font-bold text-[11px] sm:text-xs uppercase tracking-[0.2em] text-[#c89f59]">
-          Round {room.currentRound} of {room.totalRounds}
+          {t.game.round} {room.currentRound} {t.game.of} {room.totalRounds}
         </span>
       </div>
 
@@ -114,7 +116,7 @@ export default function DiscussionPhase() {
           <span className="text-blue-300 font-serif font-bold text-[10px] sm:text-xs tracking-wider">
             {policePlayer.username}
           </span>
-          <span className="text-blue-400/60 text-[9px] sm:text-[10px] font-serif">is the Police</span>
+          <span className="text-blue-400/60 text-[9px] sm:text-[10px] font-serif">{t.game.isThePolice}</span>
         </div>
       )}
 
@@ -137,7 +139,7 @@ export default function DiscussionPhase() {
         {/* Text Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span className={`font-serif font-black text-[10px] sm:text-[11px] tracking-[0.25em] uppercase z-10 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] ${timeLeft <= 10 ? 'text-[#fee2e2]' : 'text-[#fff8e1]'}`}>
-            {timeLeft === 0 ? 'Time Up!' : `0:${timeLeft.toString().padStart(2, '0')}`}
+            {timeLeft === 0 ? t.game.timeUp : `0:${timeLeft.toString().padStart(2, '0')}`}
           </span>
         </div>
       </div>
@@ -149,7 +151,7 @@ export default function DiscussionPhase() {
           border: '1px solid rgba(251,146,60,0.3)',
         }}>
           <span className="text-orange-300 font-serif font-bold text-[9px] sm:text-[10px] tracking-wider uppercase animate-pulse">
-            {isPolice ? '⚔ Select the Thief ⚔' : '⏳ Police is choosing...'}
+            {isPolice ? t.game.selectThief : t.game.policeIsChoosing}
           </span>
         </div>
       )}
@@ -167,7 +169,7 @@ export default function DiscussionPhase() {
         <path d="M17 16 Q20 19 23 16" stroke="#5a3e15" strokeWidth="0.8" fill="none"/>
       </svg>
       <span className="text-[#c89f59] font-serif text-[10px] tracking-widest uppercase">
-        {isPolicePhase ? 'Accusation' : 'Discussion'}
+        {isPolicePhase ? t.game.accusation : t.game.discussion}
       </span>
     </div>
   )
@@ -194,7 +196,7 @@ export default function DiscussionPhase() {
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
         }}>
           <span className="font-serif text-[#c89f59] text-xs sm:text-sm italic tracking-wide">
-            Waiting for Police to make an accusation...
+            {t.game.waitingForPolice}
           </span>
         </div>
       )}
@@ -244,6 +246,7 @@ export default function DiscussionPhase() {
 
 /* ─── Role Card (bottom strip) ─── */
 function RoleCard({ role, points }: { role: string; points: number | null }) {
+  const { t } = useLanguageStore()
   const isPolice = role === 'Police'
   const isThief = role === 'Thief'
 
@@ -263,15 +266,15 @@ function RoleCard({ role, points }: { role: string; points: number | null }) {
     }}>
       <div className="flex items-center gap-3">
         <span className="text-[10px] font-serif uppercase tracking-widest" style={{ color: labelColor }}>
-          Your Role
+          {t.game.yourRole}
         </span>
         <span className="font-serif font-black text-base tracking-wider" style={{ color: textColor }}>
-          {role}
+          {t.roles[role.toLowerCase() as keyof typeof t.roles] || role}
         </span>
       </div>
       {(points ?? 0) > 0 && (
         <span className="text-[10px] font-serif tracking-wider" style={{ color: labelColor }}>
-          {points} pts/round
+          {points} {t.game.pointsPerRound}
         </span>
       )}
     </div>

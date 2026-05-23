@@ -76,6 +76,21 @@ export function useRealtimeRoom({
 
     channelRef.current = channel
 
+    // ── Security: Verify broadcast authenticity ──
+    const verifyBroadcastPhase = async (expectedPhase: string): Promise<boolean> => {
+      try {
+        const { data } = await supabase.from('rooms').select('phase').eq('id', roomId).single()
+        if (data?.phase !== expectedPhase) {
+          console.warn(`[Security] Ignored unauthorized broadcast. Expected ${expectedPhase}, got ${data?.phase}`)
+          return false
+        }
+        return true
+      } catch (e) {
+        console.error('[Security] Verification failed:', e)
+        return false
+      }
+    }
+
     // ── Broadcast: PLAYER_JOINED ──
     channel.on('broadcast', { event: 'PLAYER_JOINED' }, (message) => {
       const payload = message.payload as Player
@@ -83,6 +98,12 @@ export function useRealtimeRoom({
       if (!exists) {
         setPlayers([...playersRef.current, payload])
       }
+    })
+
+    // ── Broadcast: PLAYER_LEFT ──
+    channel.on('broadcast', { event: 'PLAYER_LEFT' }, (message) => {
+      const payload = message.payload as { playerId: string }
+      setPlayers(playersRef.current.filter((p) => p.id !== payload.playerId))
     })
 
     // ── Presence: sync (updates connection status only) ──
@@ -136,7 +157,9 @@ export function useRealtimeRoom({
     })
 
     // ── Broadcast: GAME_STARTED ──
-    channel.on('broadcast', { event: 'GAME_STARTED' }, (message) => {
+    channel.on('broadcast', { event: 'GAME_STARTED' }, async (message) => {
+      if (!(await verifyBroadcastPhase('DISCUSSION'))) return
+      
       const payload = message.payload as { policeId: string; phase: string; phaseEndsAt?: string }
       const currentRoom = useGameStore.getState().room
       if (currentRoom) {
@@ -149,7 +172,9 @@ export function useRealtimeRoom({
     })
 
     // ── Broadcast: ACCUSATION_MADE ──
-    channel.on('broadcast', { event: 'ACCUSATION_MADE' }, (message) => {
+    channel.on('broadcast', { event: 'ACCUSATION_MADE' }, async (message) => {
+      if (!(await verifyBroadcastPhase('ROUND_RESULT'))) return
+
       const payload = message.payload as RoundResult
       setPhase('ROUND_RESULT')
       setLastResult(payload)
@@ -157,14 +182,16 @@ export function useRealtimeRoom({
         setPlayers(
           playersRef.current.map((p) => ({
             ...p,
-            score: payload.scores[p.id] ?? p.score,
+            score: payload.scores![p.id] ?? p.score,
           }))
         )
       }
     })
 
     // ── Broadcast: ROUND_STARTED ──
-    channel.on('broadcast', { event: 'ROUND_STARTED' }, (message) => {
+    channel.on('broadcast', { event: 'ROUND_STARTED' }, async (message) => {
+      if (!(await verifyBroadcastPhase('DISCUSSION'))) return
+
       const payload = message.payload as {
         roundNumber: number; policeId: string; phase: string; phaseEndsAt?: string
       }
@@ -181,7 +208,9 @@ export function useRealtimeRoom({
     })
 
     // ── Broadcast: GAME_ENDED ──
-    channel.on('broadcast', { event: 'GAME_ENDED' }, (message) => {
+    channel.on('broadcast', { event: 'GAME_ENDED' }, async (message) => {
+      if (!(await verifyBroadcastPhase('FINAL_RESULTS'))) return
+
       const payload = message.payload as { finalScores: FinalScore[] }
       setPhase('FINAL_RESULTS')
       setFinalScores(payload.finalScores)

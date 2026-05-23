@@ -4,6 +4,7 @@ import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
+import { useLanguageStore } from '../../stores/languageStore'
 import mainGameMobile from '../../assets/main_game.webp'
 import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
@@ -42,6 +43,7 @@ export default function GameTableLayout({
   const speakingPlayers = useVoiceStore((s) => s.speakingPlayers)
   const remoteMutedMap = useVoiceStore((s) => s.remoteMutedMap)
   const isMeMuted = useVoiceStore((s) => s.isMuted)
+  const { t } = useLanguageStore()
   const [now, setNow] = useState(Date.now())
 
   // Force re-render periodically to clear old emotes
@@ -105,36 +107,7 @@ export default function GameTableLayout({
             </div>
           </div>
 
-          {/* SVG Layer for Finger Pointing Lines */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none z-15" style={{ filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.6))' }}>
-            <defs>
-              <linearGradient id="pointerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#d4af37" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#ff6b6b" stopOpacity="0.9" />
-              </linearGradient>
-            </defs>
-            {Object.entries(pointers).map(([fromId, toId]) => {
-              const fromPos = playerPositions.find(p => p.player.id === fromId)
-              const toPos = playerPositions.find(p => p.player.id === toId)
-              if (!fromPos || !toPos) return null
 
-              return (
-                <line
-                  key={`${fromId}-${toId}`}
-                  x1={`${fromPos.x}%`}
-                  y1={`${fromPos.y}%`}
-                  x2={`${toPos.x}%`}
-                  y2={`${toPos.y}%`}
-                  stroke="url(#pointerGradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray="8 6"
-                  className="opacity-70"
-                  style={{ animation: 'dashMove 2s linear infinite' }}
-                />
-              )
-            })}
-          </svg>
 
           {/* Player seats */}
           {playerPositions.map(({ player, x, y }) => {
@@ -176,7 +149,7 @@ export default function GameTableLayout({
                         <svg className="w-3 h-3 text-blue-200" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
                         </svg>
-                        Police
+                        {t.roles.police}
                       </div>
                     </div>
                   )}
@@ -254,6 +227,33 @@ export default function GameTableLayout({
                         </svg>
                       </div>
                     )}
+                    
+                    {/* Vote Badges (Who is pointing at me) */}
+                    {(() => {
+                      const pointersToMe = Object.entries(pointers)
+                        .filter(([_, toId]) => toId === player.id)
+                        .map(([fromId]) => players.find(p => p.id === fromId))
+                        .filter(Boolean) as Player[]
+                        
+                      if (pointersToMe.length === 0) return null;
+                      
+                      return (
+                        <div className="absolute top-0 right-full mr-0.5 sm:mr-1 flex flex-row-reverse -space-x-1.5 -space-x-reverse pointer-events-none z-50 animate-in zoom-in-50 duration-200" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }}>
+                          {pointersToMe.map((pointerPlayer, i) => {
+                            const pointerAvatarUrl = avatarKeyToUrl(pointerPlayer.avatarKey) || (pointerPlayer.id === myPlayerId ? myAvatar : null)
+                            return (
+                              <div key={pointerPlayer.id} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-[#d4af37] bg-[#0d0704] flex items-center justify-center overflow-hidden" style={{ zIndex: 20 - i, boxShadow: '0 0 5px rgba(212,175,55,0.5)' }}>
+                                {pointerAvatarUrl ? (
+                                  <img src={pointerAvatarUrl} className="w-full h-full object-cover" />
+                                ) : (
+                                  <svg className="w-full h-full text-[#c89f59] p-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
                   </div>
 
                   {/* Player name */}
@@ -265,7 +265,7 @@ export default function GameTableLayout({
                       isMe ? 'text-[#ffe58f]' : 'text-[#c89f59]'
                     }`}>
                       {player.username}
-                      {isMe && <span className="text-[#8a6b20] ml-0.5">(You)</span>}
+                      {isMe && <span className="text-[#8a6b20] ml-0.5">{t.game.you}</span>}
                     </span>
                   </div>
                 </button>

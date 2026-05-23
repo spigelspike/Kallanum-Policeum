@@ -3,9 +3,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { supabase } from '../../lib/supabase'
 import { playClick } from '../../utils/sounds'
+import { useLanguageStore } from '../../stores/languageStore'
 import type { FinalScore } from '../../types/game'
-import mainMenuDesktopBg from '../../assets/main_menu_desktop.webp'
-import mobileBg from '../../assets/main_menu_bg.webp'
+import mainGameDesktopBg from '../../assets/main_game_desktop.webp'
+import mobileBg from '../../assets/main_game.webp'
+import { avatarKeyToUrl } from '../../utils/avatarMap'
+import { Users, AlertCircle, RefreshCw, Home, BarChart2, X } from 'lucide-react'
+import { useRoom } from '../../hooks/useRoom'
+import { useProfileStore } from '../../stores/profileStore'
 
 export default function ResultsPage() {
   const navigate = useNavigate()
@@ -14,11 +19,20 @@ export default function ResultsPage() {
 
   const finalScores = useGameStore((s) => s.finalScores)
   const setFinalScores = useGameStore((s) => s.setFinalScores)
+  const players = useGameStore((s) => s.players) // Use players to get avatarKey
   const resetStore = useGameStore((s) => s.reset)
+  const myPlayerId = useGameStore((s) => s.myPlayerId)
+  const { t } = useLanguageStore()
+  
+  const { joinRoom } = useRoom()
+  const { name } = useProfileStore()
 
   const [localScores, setLocalScores] = useState<FinalScore[]>([])
   const [loading, setLoading] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  const [showScoreboard, setShowScoreboard] = useState(false)
 
   useEffect(() => {
     async function loadResults() {
@@ -47,7 +61,7 @@ export default function ResultsPage() {
 
         const { data: playersData, error: playersErr } = await supabase
           .from('room_players')
-          .select('player_id, username, score')
+          .select('player_id, username, score, avatar_key')
           .eq('room_id', roomData.id)
 
         if (playersErr || !playersData) {
@@ -57,15 +71,19 @@ export default function ResultsPage() {
 
         const sorted = [...playersData]
           .sort((a, b) => b.score - a.score)
-          .map((p, idx) => ({
-            playerId: p.player_id,
-            username: p.username,
-            totalScore: p.score,
-            rank: idx + 1,
-          }))
+          .map((p, idx) => {
+            const storePlayer = players.find(sp => sp.id === p.player_id)
+            return {
+              playerId: p.player_id,
+              username: p.username,
+              totalScore: p.score,
+              rank: idx + 1,
+              avatarKey: storePlayer?.avatarKey || null,
+            }
+          })
 
-        setLocalScores(sorted)
-        setFinalScores(sorted)
+        setLocalScores(sorted as any)
+        setFinalScores(sorted as any)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load results.')
       } finally {
@@ -81,26 +99,74 @@ export default function ResultsPage() {
     navigate('/')
   }
 
+  async function handlePlayAgain() {
+    playClick()
+    
+    setResetting(true)
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session || !roomCode) return
+      
+      const { data: roomData } = await supabase
+        .from('rooms')
+        .select('id, host_id')
+        .eq('code', roomCode.toUpperCase())
+        .maybeSingle()
+        
+      if (roomData) {
+        // If host, attempt to reset the game first
+        if (roomData.host_id === myPlayerId) {
+          const response = await supabase.functions.invoke('reset-game', {
+            body: { roomId: roomData.id },
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          })
+          if (response.error) {
+             console.error("Reset failed:", response.error)
+          }
+        }
+        
+        // Wait a small bit for DB to propagate the phase change to WAITING
+        await new Promise(r => setTimeout(r, 500))
+        
+        // Attempt to rejoin the room
+        const joinedCode = await joinRoom(name.trim(), roomCode)
+        if (joinedCode) {
+          resetStore()
+          navigate(`/room/${joinedCode}`)
+          return
+        } else {
+           // joinRoom returns null on error. useRoom stores error, but we can set a local one
+           setError(roomData.host_id === myPlayerId ? "Failed to restart game." : "Waiting for host to play again...")
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setResetting(false)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
         <div className="animate-spin h-10 w-10 border-4 border-amber-400 border-t-transparent rounded-full mb-4" />
-        <p className="text-slate-400 text-sm font-medium">Calculating final standings...</p>
+        <p className="text-[#c89f59] text-sm font-serif font-bold uppercase tracking-widest">{t.game.calculatingStandings}</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-400 text-2xl mb-4 font-bold">
-          !
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-red-900/40 border border-red-500/50 rounded-full flex items-center justify-center text-red-500 mb-4">
+          <AlertCircle size={32} />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Error Loading Standings</h2>
-        <p className="text-slate-400 max-w-sm mb-6 text-sm">{error}</p>
+        <h2 className="text-2xl font-serif font-black text-white uppercase tracking-widest mb-2">{t.game.errorLoadingStandings}</h2>
+        <p className="text-slate-400 max-w-sm mb-8 text-sm font-mono">{error}</p>
         <button onClick={handleLobbyRedirect}
-          className="px-6 py-2.5 rounded-xl font-semibold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all cursor-pointer">
-          Back to Lobby
+          className="px-8 py-3 rounded-md font-serif font-bold uppercase tracking-widest bg-gradient-to-b from-[#d4af37] to-[#8a6b20] text-black hover:brightness-110 transition-all border border-[#ffe58f]">
+          {t.game.backToLobby}
         </button>
       </div>
     )
@@ -109,178 +175,200 @@ export default function ResultsPage() {
   const firstPlace = localScores[0]
   const secondPlace = localScores[1]
   const thirdPlace = localScores[2]
-  const runnerUps = localScores.slice(3)
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-950 text-white flex flex-col items-center justify-start px-4 py-8 md:py-12">
-      {/* --- Backgrounds --- */}
-      <div
-        className="hidden md:block absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80"
-        style={{ backgroundImage: `url(${mainMenuDesktopBg})` }}
-      />
-      <div
-        className="md:hidden absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80"
-        style={{ backgroundImage: `url(${mobileBg})` }}
-      />
-      <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none" />
+    <div className="min-h-screen relative overflow-hidden bg-[#050505] text-white flex flex-col items-center select-none font-serif">
+      
+      {/* Background Overlay */}
+      <div className="hidden md:block absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-luminosity" style={{ backgroundImage: `url(${mainGameDesktopBg})` }} />
+      <div className="md:hidden absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-luminosity" style={{ backgroundImage: `url(${mobileBg})` }} />
+      
+      {/* Heavy vignette / darkness layer to match the dungeon vibe */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%)' }} />
+      <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
-      {/* --- Layout Wrapper --- */}
-      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center">
-        {/* Title */}
-        <div className="text-center mb-10">
-          <p className="text-xs text-[#c89f59] uppercase tracking-[0.25em] font-serif font-black mb-2 drop-shadow-md">
-            Kallanum Policeum
+      {/* --- TOP NAVIGATION BAR --- */}
+      <div className="absolute top-0 left-0 right-0 p-4 md:p-8 flex justify-between items-start z-50 pointer-events-none">
+        
+        {/* Left: Players */}
+        <button className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded border border-[#d4af37]/40 bg-black/60 hover:bg-black/80 transition-colors backdrop-blur-sm">
+          <Users size={16} className="text-[#d4af37]" />
+          <span className="text-[#ffe58f] text-[10px] md:text-xs font-bold uppercase tracking-widest">{localScores.length} PLAYERS</span>
+        </button>
+
+        {/* Center: Title */}
+        <div className="flex flex-col items-center mt-[-4px] md:mt-0 text-center">
+          <p className="text-[#d4af37] text-[9px] md:text-xs font-black uppercase tracking-[0.3em] opacity-80 mb-1">
+            KALLANUM POLICEUM
           </p>
-          <h1 className="text-4xl sm:text-5xl font-serif font-black uppercase tracking-widest" style={{
-            background: 'linear-gradient(180deg, #ffe58f 0%, #d4af37 40%, #b8860b 100%)',
+          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-widest" style={{
+            background: 'linear-gradient(180deg, #fff8e1 0%, #ffe58f 30%, #d4af37 70%, #8a6b20 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9))',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))'
           }}>
-            Final Results
+            FINAL RESULTS
           </h1>
-          {roomCode && (
-            <p className="text-xs text-amber-500/80 mt-2 font-mono tracking-widest uppercase">
-              Room Code: {roomCode}
-            </p>
-          )}
+          
+          <div className="flex items-center gap-3 mt-3 md:mt-4 opacity-80">
+            <div className="w-8 md:w-12 h-[1px] bg-gradient-to-r from-transparent to-[#d4af37]" />
+            <div className="w-1.5 h-1.5 rotate-45 border border-[#d4af37]" />
+            <span className="text-[#ffe58f] text-[9px] md:text-xs font-mono font-bold tracking-[0.2em] px-2">ROOM CODE: {roomCode}</span>
+            <div className="w-1.5 h-1.5 rotate-45 border border-[#d4af37]" />
+            <div className="w-8 md:w-12 h-[1px] bg-gradient-to-l from-transparent to-[#d4af37]" />
+          </div>
         </div>
 
-        {/* Podium section for Top 3 */}
-        {localScores.length > 0 && (
-          <div className="w-full flex flex-col sm:flex-row items-end justify-center gap-3 sm:gap-4 mb-10 min-h-[220px] sm:min-h-[260px] px-2">
-            
-            {/* 2nd Place */}
-            <div className="order-2 sm:order-1 flex-1 flex flex-col items-center group w-full sm:w-auto mt-4 sm:mt-0">
-              {secondPlace ? (
-                <>
-                  <div className="mb-2 text-center w-full px-2">
-                    <span className="text-2xl sm:text-3xl drop-shadow-lg">🥈</span>
-                    <p className="text-sm font-serif font-bold text-slate-300 truncate w-full" title={secondPlace.username}>
-                      {secondPlace.username}
-                    </p>
-                    <p className="text-xs font-mono text-[#c89f59]">{secondPlace.totalScore} pts</p>
-                  </div>
-                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-16 sm:h-28 transition-transform group-hover:-translate-y-1 duration-300" style={{
-                    background: 'linear-gradient(180deg, #334155, #0f172a)',
-                    border: '2px solid #64748b',
-                    borderBottom: 'none',
-                    boxShadow: 'inset 0 4px 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.6)'
-                  }}>
-                    <span className="text-3xl sm:text-4xl font-serif font-black text-slate-400 opacity-80">2</span>
-                  </div>
-                </>
-              ) : (
-                <div className="h-0 w-full" />
-              )}
-            </div>
+        {/* Right: Empty spacer to balance layout */}
+        <div className="hidden md:block w-[120px]"></div>
+      </div>
 
-            {/* 1st Place (Winner) */}
-            <div className="order-1 sm:order-2 flex-1 flex flex-col items-center group w-full sm:w-auto">
-              {firstPlace ? (
-                <>
-                  <div className="mb-2 text-center scale-110 w-full px-2">
-                    <span className="text-4xl block drop-shadow-[0_0_15px_rgba(255,215,0,0.5)] mb-1">👑</span>
-                    <p className="text-base font-serif font-black text-amber-300 truncate w-full" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }} title={firstPlace.username}>
-                      {firstPlace.username}
-                    </p>
-                    <p className="text-sm font-mono text-amber-400 font-bold">{firstPlace.totalScore} pts</p>
-                  </div>
-                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-20 sm:h-36 transition-transform group-hover:-translate-y-1 duration-300 relative overflow-hidden" style={{
-                    background: 'linear-gradient(180deg, #d4af37, #8a6b20)',
-                    border: '2px solid #ffe58f',
-                    borderBottom: 'none',
-                    boxShadow: 'inset 0 4px 15px rgba(255,255,255,0.3), 0 0 30px rgba(212,175,55,0.3), 0 10px 20px rgba(0,0,0,0.8)'
-                  }}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <span className="text-4xl sm:text-5xl font-serif font-black text-[#fff8e1] relative z-10" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.6)' }}>1</span>
-                  </div>
-                </>
-              ) : (
-                <div className="h-0 w-full" />
-              )}
-            </div>
-
-            {/* 3rd Place */}
-            <div className="order-3 flex-1 flex flex-col items-center group w-full sm:w-auto mt-4 sm:mt-0">
-              {thirdPlace ? (
-                <>
-                  <div className="mb-2 text-center w-full px-2">
-                    <span className="text-2xl sm:text-3xl drop-shadow-lg">🥉</span>
-                    <p className="text-sm font-serif font-bold text-orange-400 truncate w-full" title={thirdPlace.username}>
-                      {thirdPlace.username}
-                    </p>
-                    <p className="text-xs font-mono text-[#c89f59]">{thirdPlace.totalScore} pts</p>
-                  </div>
-                  <div className="w-full rounded-t-xl sm:rounded-t-2xl flex items-center justify-center h-12 sm:h-20 transition-transform group-hover:-translate-y-1 duration-300" style={{
-                    background: 'linear-gradient(180deg, #9a5f2a, #4a2810)',
-                    border: '2px solid #b87333',
-                    borderBottom: 'none',
-                    boxShadow: 'inset 0 4px 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.6)'
-                  }}>
-                    <span className="text-2xl sm:text-3xl font-serif font-black text-orange-300/80">3</span>
-                  </div>
-                </>
-              ) : (
-                <div className="h-0 w-full" />
-              )}
+      {/* --- PODIUM --- */}
+      <div className="relative z-20 flex-1 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center gap-8 md:gap-4 lg:gap-8 px-4 pt-40 md:pt-32 pb-48">
+        
+        {/* 2nd Place */}
+        {secondPlace && (
+          <div className="order-2 md:order-1 relative w-[220px] md:w-[240px] md:mb-6 animate-[fadeInUp_0.8s_ease-out]">
+            {/* Rank Badge */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e2e8f0]" style={{
+              background: 'linear-gradient(180deg, #94a3b8, #475569)',
+              boxShadow: '0 0 15px rgba(148, 163, 184, 0.4), inset 0 2px 4px rgba(255,255,255,0.4)'
+            }}>
+              <span className="text-2xl font-black text-white drop-shadow-md">2</span>
             </div>
             
+            {/* Card Body */}
+            <div className="pt-10 pb-8 px-6 rounded-lg bg-[#0f1115]/90 backdrop-blur-md border border-[#64748b] flex flex-col items-center" style={{
+              boxShadow: '0 10px 30px -10px rgba(148, 163, 184, 0.2), inset 0 0 40px rgba(0,0,0,0.8)'
+            }}>
+              <div className="w-20 h-20 rounded-full border-2 border-[#94a3b8] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(148,163,184,0.3)]">
+                <img src={avatarKeyToUrl((secondPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${secondPlace.username}`} alt={secondPlace.username} className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{secondPlace.username}</h3>
+              <p className="text-[#3b82f6] font-mono font-bold">{secondPlace.totalScore} PTS</p>
+            </div>
           </div>
         )}
 
-        {/* Runner ups */}
-        {runnerUps.length > 0 && (
-          <div className="w-full mb-10">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#c89f59]/50" />
-              <p className="text-xs font-serif font-bold text-[#c89f59] uppercase tracking-[0.2em] whitespace-nowrap">Other Standings</p>
-              <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#c89f59]/50" />
+        {/* 1st Place */}
+        {firstPlace && (
+          <div className="order-1 md:order-2 relative w-[260px] md:w-[300px] z-30 animate-[fadeInUp_0.6s_ease-out]">
+            {/* Rank Badge */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full z-10 flex items-center justify-center border-2 border-[#ffe58f]" style={{
+              background: 'linear-gradient(180deg, #d4af37, #8a6b20)',
+              boxShadow: '0 0 30px rgba(212, 175, 55, 0.6), inset 0 2px 4px rgba(255,255,255,0.4)'
+            }}>
+              <span className="text-3xl font-black text-[#fff8e1] drop-shadow-md">1</span>
             </div>
-            <div className="space-y-3">
-              {runnerUps.map((player) => (
-                <div key={player.playerId} className="flex items-center justify-between px-5 py-3 rounded-xl transition-all" style={{
-                  background: 'linear-gradient(180deg, rgba(20,12,7,0.8) 0%, rgba(10,6,3,0.9) 100%)',
-                  border: '1px solid rgba(200,159,89,0.3)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-serif font-black text-[#c89f59] w-6 opacity-60">#{player.rank}</span>
-                    <span className="text-[15px] font-serif font-bold text-white/90">{player.username}</span>
+            
+            {/* Card Body */}
+            <div className="pt-12 pb-10 px-6 rounded-lg bg-[#141005]/95 backdrop-blur-md border border-[#d4af37] flex flex-col items-center" style={{
+              boxShadow: '0 15px 40px -10px rgba(212, 175, 55, 0.4), inset 0 0 50px rgba(0,0,0,0.9), 0 0 10px rgba(212, 175, 55, 0.3)'
+            }}>
+              {/* Laurel Wreath decorative SVG (simulated with CSS for now or skipped) */}
+              <div className="relative w-28 h-28 mb-5">
+                {/* Glow behind avatar */}
+                <div className="absolute inset-0 bg-[#d4af37] opacity-20 blur-xl rounded-full" />
+                
+                <div className="absolute inset-1 rounded-full border-[3px] border-[#d4af37] overflow-hidden bg-black shadow-[0_0_20px_rgba(212,175,55,0.6)] z-10">
+                  <img src={avatarKeyToUrl((firstPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firstPlace.username}`} alt={firstPlace.username} className="w-full h-full object-cover" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-black text-[#d4af37] uppercase tracking-widest mb-1 text-center w-full truncate drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                {firstPlace.username}
+              </h3>
+              <p className="text-[#ffe58f] font-mono font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstPlace.totalScore} PTS</p>
+            </div>
+          </div>
+        )}
+
+        {/* 3rd Place */}
+        {thirdPlace && (
+          <div className="order-3 md:order-3 relative w-[220px] md:w-[240px] md:mb-12 animate-[fadeInUp_1s_ease-out]">
+            {/* Rank Badge */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e6a15c]" style={{
+              background: 'linear-gradient(180deg, #b87333, #733c16)',
+              boxShadow: '0 0 15px rgba(184, 115, 51, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'
+            }}>
+              <span className="text-2xl font-black text-white drop-shadow-md">3</span>
+            </div>
+            
+            {/* Card Body */}
+            <div className="pt-10 pb-8 px-6 rounded-lg bg-[#150d05]/90 backdrop-blur-md border border-[#8b4513] flex flex-col items-center" style={{
+              boxShadow: '0 10px 30px -10px rgba(139, 69, 19, 0.3), inset 0 0 40px rgba(0,0,0,0.8)'
+            }}>
+              <div className="w-20 h-20 rounded-full border-2 border-[#b87333] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(184,115,51,0.3)]">
+                <img src={avatarKeyToUrl((thirdPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${thirdPlace.username}`} alt={thirdPlace.username} className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{thirdPlace.username}</h3>
+              <p className="text-[#d97706] font-mono font-bold">{thirdPlace.totalScore} PTS</p>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* --- BOTTOM NAVIGATION BAR --- */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 flex justify-center items-end z-50 pointer-events-none">
+        
+        {/* Center: Main Actions */}
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <button onClick={handlePlayAgain} disabled={resetting} className="pointer-events-auto flex items-center justify-center gap-3 w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group disabled:opacity-50">
+            <RefreshCw size={16} className={`text-slate-400 transition-transform duration-500 ${resetting ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">{resetting ? 'LOADING...' : 'PLAY AGAIN'}</span>
+          </button>
+
+          <button onClick={handleLobbyRedirect} className="pointer-events-auto flex items-center justify-center gap-3 w-56 py-4 rounded-full transition-all hover:scale-105 shadow-[0_5px_20px_rgba(0,0,0,0.6)] group border border-[#ffe58f]" style={{
+            background: 'linear-gradient(180deg, #d4af37 0%, #b8860b 40%, #8a6b20 100%)',
+            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 5px 20px rgba(0,0,0,0.8)'
+          }}>
+            <Home size={18} className="text-black" />
+            <span className="text-black text-[14px] font-black uppercase tracking-[0.2em] drop-shadow-sm">RETURN TO LOBBY</span>
+          </button>
+
+          <button onClick={() => { playClick(); setShowScoreboard(true); }} className="pointer-events-auto flex items-center justify-center gap-3 w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group">
+            <BarChart2 size={16} className="text-slate-400" />
+            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">VIEW SCOREBOARD</span>
+          </button>
+        </div>
+      </div>
+
+      {/* --- SCOREBOARD MODAL --- */}
+      {showScoreboard && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowScoreboard(false)} />
+          <div className="relative z-10 w-full max-w-lg bg-[#0a0a0a] border border-[#d4af37]/40 rounded-xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+            <div className="p-4 border-b border-[#d4af37]/20 flex justify-between items-center bg-gradient-to-r from-transparent via-[#d4af37]/5 to-transparent">
+              <h3 className="text-[#ffe58f] font-black tracking-widest uppercase">FULL SCOREBOARD</h3>
+              <button onClick={() => setShowScoreboard(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2">
+              {localScores.map((player) => (
+                <div key={player.playerId} className="flex items-center justify-between p-3 rounded-lg bg-[#111] border border-[#333] hover:border-[#d4af37]/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 text-center text-sm font-black text-[#8a6b20]">#{player.rank}</span>
+                    <div className="w-8 h-8 rounded-full border border-[#d4af37]/50 overflow-hidden">
+                       <img src={avatarKeyToUrl((player as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="font-bold text-slate-200">{player.username}</span>
                   </div>
-                  <span className="font-mono font-bold text-amber-500">{player.totalScore} pts</span>
+                  <span className="font-mono text-[#d4af37]">{player.totalScore} PTS</span>
                 </div>
               ))}
             </div>
           </div>
-        )}
-
-        {/* Action Button */}
-        <div className="w-full mt-4">
-          <button
-            onClick={handleLobbyRedirect}
-            className="w-full relative group rounded-xl p-[2px] transition-all duration-150 active:scale-[0.98] focus:outline-none"
-            style={{
-              background: 'linear-gradient(180deg, #ffe58f, #a67c00)',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.8)'
-            }}
-          >
-            <div className="w-full py-4 rounded-[10px] flex items-center justify-center transition-all group-hover:brightness-110" style={{
-              background: 'linear-gradient(180deg, #c9a033 0%, #9a7220 40%, #7a5a18 100%)',
-              boxShadow: 'inset 0 1px 1px rgba(255,229,143,0.5), inset 0 -2px 4px rgba(0,0,0,0.4)'
-            }}>
-              <span className="font-serif font-black text-lg tracking-[0.15em] uppercase" style={{
-                background: 'linear-gradient(180deg, #fff8e1 0%, #ffe58f 50%, #d4af37 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))'
-              }}>
-                Return to Main Menu
-              </span>
-            </div>
-          </button>
         </div>
-      </div>
+      )}
+      
+      <style>{`
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(40px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
