@@ -41,7 +41,7 @@ function VoiceLogic() {
   const remoteUsers = useRemoteUsers()
 
   // CRITICAL: We must actually publish the track to the server so others can hear it!
-  usePublish([localMicrophoneTrack])
+  usePublish(localMicrophoneTrack ? [localMicrophoneTrack] : [])
 
   // Ensure we start muted and clean up when leaving
   useEffect(() => {
