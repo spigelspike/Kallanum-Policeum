@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import type { Player, Room, GamePhase, RoundResult, FinalScore } from '../types/game'
 
+export interface WorldChatMessage {
+  id: string
+  playerId: string
+  username: string
+  message: string
+  timestamp: number
+}
+
 interface GameState {
   // Room data
   room: Room | null
@@ -21,6 +29,10 @@ interface GameState {
   // Ephemeral Interactive State
   pointers: Record<string, string> // fromPlayerId -> toPlayerId
   emotes: Record<string, { emoji: string; timestamp: number }>
+
+  // World Chat State
+  worldChatMessages: WorldChatMessage[]
+  worldChatOnlineCount: number
 
   // Actions — room
   setRoom: (room: Room) => void
@@ -46,6 +58,12 @@ interface GameState {
   setEmote: (playerId: string, emoji: string) => void
   clearInteractiveState: () => void
 
+  // Actions — World Chat
+  setWorldChatMessages: (messages: WorldChatMessage[]) => void
+  addWorldChatMessage: (msg: WorldChatMessage) => void
+  setWorldChatOnlineCount: (count: number) => void
+  clearWorldChat: () => void
+
   // Reset
   reset: () => void
 }
@@ -61,6 +79,8 @@ const initialState = {
   finalScores: [],
   pointers: {},
   emotes: {},
+  worldChatMessages: [],
+  worldChatOnlineCount: 0,
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -131,6 +151,20 @@ export const useGameStore = create<GameState>((set) => ({
   })),
 
   clearInteractiveState: () => set({ pointers: {}, emotes: {} }),
+
+  setWorldChatMessages: (messages) => set({ worldChatMessages: messages }),
+  
+  addWorldChatMessage: (msg) => set((state) => {
+    // Avoid duplicates by ID
+    if (state.worldChatMessages.find(m => m.id === msg.id)) return state
+    return { 
+      worldChatMessages: [...state.worldChatMessages.slice(-99), msg] 
+    }
+  }),
+
+  setWorldChatOnlineCount: (count) => set({ worldChatOnlineCount: count }),
+
+  clearWorldChat: () => set({ worldChatMessages: [], worldChatOnlineCount: 0 }),
 
   reset: () => set(initialState),
 }))
