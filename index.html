@@ -28,6 +28,21 @@
     
     <!-- Theme Color for PWA / Mobile -->
     <meta name="theme-color" content="#1a1a2e" />
+    <script>
+      // Forcefully clear old service workers and cache for all players automatically
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          let hasCleared = false;
+          for(let registration of registrations) {
+            registration.unregister();
+            hasCleared = true;
+          }
+          if (hasCleared && !window.location.search.includes('cleared')) {
+            window.location.href = window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'cleared=true';
+          }
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
