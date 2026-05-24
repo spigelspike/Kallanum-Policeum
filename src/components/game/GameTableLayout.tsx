@@ -5,6 +5,7 @@ import { useProfileStore } from '../../stores/profileStore'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { useLanguageStore } from '../../stores/languageStore'
+import PlayerSettingsModal from './PlayerSettingsModal'
 import mainGameMobile from '../../assets/main_game.webp'
 import mainGameDesktop from '../../assets/main_game_desktop.webp'
 
@@ -45,6 +46,7 @@ export default function GameTableLayout({
   const isMeMuted = useVoiceStore((s) => s.isMuted)
   const { t } = useLanguageStore()
   const [now, setNow] = useState(Date.now())
+  const [settingsPlayerId, setSettingsPlayerId] = useState<string | null>(null)
 
   // Force re-render periodically to clear old emotes
   useEffect(() => {
@@ -227,6 +229,22 @@ export default function GameTableLayout({
                         </svg>
                       </div>
                     )}
+
+                    {/* Settings Gear (Remote players only) */}
+                    {!isMe && (
+                      <div 
+                        className="absolute -bottom-1 -left-1 z-30 bg-[#0d0704] rounded-full p-1 border border-[#c89f59]/40 text-[#c89f59] hover:bg-[#2a1b12] hover:text-[#ffe58f] transition-colors cursor-pointer shadow-lg"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSettingsPlayerId(player.id)
+                        }}
+                      >
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                    )}
                     
                     {/* Vote Badges (Who is pointing at me) */}
                     {(() => {
@@ -282,6 +300,14 @@ export default function GameTableLayout({
             {bottomContent}
           </div>
         </div>
+      )}
+
+      {/* Player Settings Modal */}
+      {settingsPlayerId && (
+        <PlayerSettingsModal 
+          player={players.find(p => p.id === settingsPlayerId)!} 
+          onClose={() => setSettingsPlayerId(null)} 
+        />
       )}
 
       <style>{`

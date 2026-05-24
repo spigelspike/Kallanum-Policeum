@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   if (typeof roomId !== "string" || !roomId) return jsonError("roomId is required", cors);
   if (typeof accusedPlayerId !== "string" || !accusedPlayerId) return jsonError("accusedPlayerId is required", cors);
 
-  const { data: room, error: rErr } = await admin.from("rooms").select("id, host_id, phase, current_round, total_rounds, expires_at").eq("id", roomId).maybeSingle();
+  const { data: room, error: rErr } = await admin.from("rooms").select("id, host_id, phase, current_round, total_rounds, expires_at, phase_ends_at").eq("id", roomId).maybeSingle();
   if (rErr || !room) return jsonError(rErr?.message ?? "Room not found", cors, rErr ? 500 : 404);
   if (isExpired(room.expires_at)) return jsonError("Room has expired", cors, 410);
   if (room.phase !== "DISCUSSION") return jsonError("Accusations only during DISCUSSION phase", cors);
@@ -43,8 +43,22 @@ Deno.serve(async (req) => {
   const { data: allRoles, error: rolesErr } = await admin.from("player_roles").select("player_id, role, role_points").eq("room_id", roomId).eq("round_number", room.current_round);
   if (rolesErr || !allRoles || !allRoles.length) return jsonError("Failed to fetch roles", cors, 500);
 
+  const { data: curPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, score, is_connected").eq("room_id", roomId);
+  if (pErr || !curPlayers) return jsonError("Failed to fetch players", cors, 500);
+
   const callerRole = allRoles.find((r) => r.player_id === user.id);
-  if (!callerRole || callerRole.role !== "Police") return jsonError("Only Police can accuse", cors, 403);
+  const policeRole = allRoles.find((r) => r.role === "Police");
+  const policePlayer = curPlayers.find(p => p.player_id === policeRole?.player_id);
+
+  // Add 15000ms grace period for clock skew between client and server
+  const isTimeout = room.phase_ends_at ? new Date(room.phase_ends_at).getTime() <= Date.now() + 15000 : false;
+  const isPoliceOffline = policePlayer && !policePlayer.is_connected;
+
+  if (!callerRole) return jsonError("Caller not found", cors, 403);
+  if (callerRole.role !== "Police" && !isTimeout && !isPoliceOffline) {
+    return jsonError("Only Police can accuse (unless timeout or Police is offline)", cors, 403);
+  }
+  if (!policeRole) return jsonError("No Police found", cors, 500);
 
   const { data: existing } = await admin.from("round_results").select("id").eq("room_id", roomId).eq("round_number", room.current_round).maybeSingle();
   if (existing) return jsonError("Accusation already made this round", cors);
@@ -60,8 +74,7 @@ Deno.serve(async (req) => {
     else roundScores[r.player_id] = r.role_points;
   }
 
-  const { data: curPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, score").eq("room_id", roomId);
-  if (pErr || !curPlayers) return jsonError("Failed to fetch scores", cors, 500);
+  // Scores were already fetched earlier
 
   const cumScores: Record<string, number> = {};
   for (const p of curPlayers) {
@@ -71,10 +84,10 @@ Deno.serve(async (req) => {
   }
 
   const accusedRole = allRoles.find((r) => r.player_id === accusedPlayerId);
-  await admin.from("round_results").insert({ room_id: roomId, round_number: room.current_round, police_id: user.id, thief_id: thiefRole.player_id, accused_id: accusedPlayerId, correct_guess: correct });
+  await admin.from("round_results").insert({ room_id: roomId, round_number: room.current_round, police_id: policeRole.player_id, thief_id: thiefRole.player_id, accused_id: accusedPlayerId, correct_guess: correct });
   await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
 
-  await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: "", accusedRole: accusedRole?.role ?? "Unknown", policeId: user.id, scores: cumScores });
+  await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: "", accusedRole: accusedRole?.role ?? "Unknown", policeId: policeRole.player_id, scores: cumScores });
 
   return jsonSuccess({ success: true }, cors);
 });

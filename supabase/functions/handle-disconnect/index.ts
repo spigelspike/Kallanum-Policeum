@@ -57,9 +57,9 @@ Deno.serve(async (req) => {
 
 
   if (dcRole.role === "Police") {
-    await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
-    await sendBroadcast(admin, roomId, "ROUND_VOIDED", { reason: "Police disconnected", disconnectedPlayerId });
-    return jsonSuccess({ success: true, action: "round_voided" }, cors);
+    // Clients will automatically detect the Police disconnect and trigger make-accusation to auto-fail the round.
+    // This allows the round to resolve gracefully (Thief wins) rather than voiding the round and getting stuck.
+    return jsonSuccess({ success: true, action: "marked_disconnected_police_handled_by_clients" }, cors);
   }
 
   if (dcRole.role === "Thief") {

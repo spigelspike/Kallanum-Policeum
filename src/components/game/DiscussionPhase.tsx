@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../stores/gameStore'
 import { supabase } from '../../lib/supabase'
 import { playEmote, playClick } from '../../utils/sounds'
@@ -66,6 +66,36 @@ export default function DiscussionPhase() {
     })
     useGameStore.getState().setEmote(myPlayerId, emoji)
   }
+
+  // ── Auto-fail if timeout or Police is offline ──
+  const autoFailTriggered = useRef(false)
+  
+  useEffect(() => {
+    const policeIsDisconnected = policePlayer && !policePlayer.isConnected
+    
+    // Check if we need to auto-fail the police
+    if ((timeLeft === 0 || policeIsDisconnected) && room?.phase === 'DISCUSSION' && !autoFailTriggered.current) {
+      autoFailTriggered.current = true
+      const triggerAutoFail = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) return
+          const response = await supabase.functions.invoke('make-accusation', {
+            body: { roomId: room.id, accusedPlayerId: policeId },
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          })
+          if (response.error) {
+            console.error('Auto-fail rejected, will retry:', response.error)
+            setTimeout(() => { autoFailTriggered.current = false }, 2000)
+          }
+        } catch (e) {
+          console.error('Failed to trigger auto-fail', e)
+          setTimeout(() => { autoFailTriggered.current = false }, 2000)
+        }
+      }
+      triggerAutoFail()
+    }
+  }, [timeLeft, policePlayer?.isConnected, room?.phase, room?.id, policeId])
 
   const handlePlayerTap = (id: string) => {
     if (id === myPlayerId) return

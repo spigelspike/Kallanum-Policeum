@@ -25,7 +25,7 @@ export default function AgoraVoiceManager() {
   const roomCode = useGameStore(s => s.room?.code)
   const myPlayerId = useGameStore(s => s.myPlayerId)
   const players = useGameStore(s => s.players)
-  const { isMuted, isDeafened, setSpeaking, resetVoice } = useVoiceStore()
+  const { isMuted, isDeafened, setSpeaking, resetVoice, localVolumeMap, localMutedMap } = useVoiceStore()
 
   const [localTrack, setLocalTrack] = useState<any | null>(null)
   const [remoteUsers, setRemoteUsers] = useState<any[]>([])
@@ -232,6 +232,30 @@ export default function AgoraVoiceManager() {
       }
     })
   }, [isDeafened, remoteUsers])
+
+  // Apply local volume and mute controls to remote tracks
+  useEffect(() => {
+    remoteUsers.forEach(user => {
+      if (user.audioTrack) {
+        let pId: string | undefined
+        // Reverse lookup: find which player ID matches this numeric UID
+        const matchedPlayer = playersRef.current.find(p => getNumericUid(p.id) === user.uid)
+        if (matchedPlayer) {
+          pId = matchedPlayer.id
+        }
+
+        if (pId) {
+          const isLocallyMuted = localMutedMap[pId]
+          if (isLocallyMuted || isDeafenedRef.current) {
+            user.audioTrack.setVolume(0)
+          } else {
+            const vol = localVolumeMap[pId] ?? 100
+            user.audioTrack.setVolume(vol)
+          }
+        }
+      }
+    })
+  }, [localVolumeMap, localMutedMap, remoteUsers])
 
   // Set up volume indicators to power the glowing green rings around avatars!
   useEffect(() => {

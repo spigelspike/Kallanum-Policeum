@@ -22,9 +22,9 @@ export default defineConfig({
         display: 'fullscreen',
         icons: [
           {
-            src: 'favicon.svg',
+            src: 'logo.webp',
             sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            type: 'image/webp',
             purpose: 'any maskable'
           }
         ]

@@ -1,18 +1,27 @@
 import { useVoiceStore } from '../../stores/voiceStore'
 import { useLanguageStore } from '../../stores/languageStore'
+import { useProfileStore } from '../../stores/profileStore'
 import { playClick } from '../../utils/sounds'
 
 export default function VoiceControls() {
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceStore()
   const { t } = useLanguageStore()
+  const myAvatar = useProfileStore((s) => s.myAvatar)
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
       
+      {/* Profile Picture */}
+      {myAvatar && (
+        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 border-orange-500/50 bg-black/50 p-0.5 sm:p-1 flex-shrink-0 ml-1">
+          <img src={myAvatar} alt="Profile" className="w-full h-full object-contain" />
+        </div>
+      )}
+
       {/* Microphone Toggle */}
       <button
         onClick={() => { playClick(); toggleMute() }}
-        className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${
+        className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
           isMuted 
             ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
             : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'
@@ -40,7 +49,7 @@ export default function VoiceControls() {
       {/* Headphones Toggle */}
       <button
         onClick={() => { playClick(); toggleDeafen() }}
-        className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${
+        className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
           isDeafened 
             ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
             : 'bg-white/10 text-white/80 border border-white/20 hover:bg-white/20'

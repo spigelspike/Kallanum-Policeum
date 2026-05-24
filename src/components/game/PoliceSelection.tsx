@@ -60,14 +60,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
     }
   }
 
-  useEffect(() => {
-    if (timeLeft === 0 && !submitted && !loading) {
-      // Auto-accuse oneself to guarantee the Thief wins on timeout
-      handleAccuse(myPlayerId!)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-  }, [timeLeft, submitted, loading, myPlayerId])
-
+  // Auto-accuse on timeout is now handled globally in DiscussionPhase.tsx
   if (submitted) {
     return (
       <div className="w-full rounded-lg py-3 text-center" style={{
