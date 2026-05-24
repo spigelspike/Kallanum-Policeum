@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ably.io wss://*.ably.io https://*.agora.io wss://*.agora.io https://api.web3forms.com; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; worker-src blob:;"
+          "value": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ably.io wss://*.ably.io https://*.ably-realtime.com wss://*.ably-realtime.com https://*.agora.io wss://*.agora.io https://*.sdrtn.com wss://*.sdrtn.com https://*.edge.agora.io wss://*.edge.agora.io https://api.web3forms.com; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; worker-src 'self' blob:;"
         },
         {
           "key": "X-Frame-Options",
