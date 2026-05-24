@@ -157,7 +157,10 @@ export const en = {
   rules: {
     title: "How to Play",
     theGoal: "The Goal",
-    goalDesc: "Kallanum Policeum (Thief and Police) is a game of deduction and deception. The <span class='text-blue-400 font-bold'>Police</span> must find the hidden <span class='text-red-400 font-bold'>Thief</span> among the players.",
+    goalDesc: {
+      main: "Kallanum Policeum (Thief and Police) is a game of deduction and deception.",
+      sub: "The Police must find the hidden Thief among the players."
+    },
     theRoles: "The Roles",
     policeDesc: "Your identity is public. Question others and use your deduction skills to tap the player you believe is the Thief.",
     thiefDesc: "Stay hidden! Lie, deflect, and act innocent. If the Police accuses the wrong person, you win and earn 500 points.",

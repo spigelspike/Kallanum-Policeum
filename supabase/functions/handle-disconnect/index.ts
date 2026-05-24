@@ -1,18 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
 
-const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = true;
-  return { "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
-}
-function jsonError(msg: string, cors: Record<string, string>, status = 400): Response {
-  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...cors, "Content-Type": "application/json" } });
-}
-function jsonSuccess(data: Record<string, unknown>, cors: Record<string, string>): Response {
-  return new Response(JSON.stringify(data), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
-}
+import { getCorsHeaders, handleCors, jsonError, jsonSuccess, isRoomExpired as isExpired } from "../_shared/cors.ts";
 function isExpired(ea: string | null): boolean { return ea ? new Date(ea) < new Date() : false; }
 
 const POLICE_CORRECT_POINTS = 500;
@@ -44,6 +33,17 @@ Deno.serve(async (req) => {
   const { data: room, error: rErr } = await admin.from("rooms").select("id, host_id, phase, current_round, total_rounds, expires_at").eq("id", roomId).maybeSingle();
   if (rErr || !room) return jsonError("Room not found", cors, 404);
   if (isExpired(room.expires_at)) return jsonError("Room has expired", cors, 410);
+
+  // Security Check 1: Must be host or self
+  const isSelf = user.id === disconnectedPlayerId;
+  const isHost = user.id === room.host_id;
+  if (!isSelf && !isHost) {
+    return jsonError("Forbidden: Only the host or the player themselves can report a disconnect", cors, 403);
+  }
+
+  // Security Check 2: Target player must be in the room
+  const { data: targetPlayer, error: pErr } = await admin.from("room_players").select("id").eq("room_id", roomId).eq("player_id", disconnectedPlayerId).maybeSingle();
+  if (pErr || !targetPlayer) return jsonError("Player not found in this room", cors, 404);
 
   await admin.from("room_players").update({ is_connected: false }).eq("room_id", roomId).eq("player_id", disconnectedPlayerId);
 

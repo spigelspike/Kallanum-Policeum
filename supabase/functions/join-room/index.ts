@@ -1,40 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
 
-const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
-
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = true;
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  };
-}
-
-function jsonError(msg: string, cors: Record<string, string>, status = 400): Response {
-  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...cors, "Content-Type": "application/json" } });
-}
-
-function isValidUsername(u: unknown): u is string {
-  if (typeof u !== "string") return false;
-  const t = u.trim();
-  return t.length > 0 && t.length <= 20 && /^[a-zA-Z0-9 ]+$/.test(t);
-}
-
-const VALID_AVATAR_KEYS = ["male1", "male2", "male3", "female1", "female2", "female3"];
-function isValidAvatarKey(value: unknown): value is string {
-  return typeof value === "string" && VALID_AVATAR_KEYS.includes(value);
-}
-
-function isValidRoomCode(c: unknown): c is string {
-  return typeof c === "string" && /^[A-Z0-9]{6}$/.test(c.toUpperCase());
-}
-
-function isExpired(expiresAt: string | null): boolean {
-  return expiresAt ? new Date(expiresAt) < new Date() : false;
-}
+import { getCorsHeaders, handleCors, jsonError, isRoomExpired as isExpired } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
   const cors = getCorsHeaders(req);

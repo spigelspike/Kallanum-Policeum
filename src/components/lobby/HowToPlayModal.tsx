@@ -86,7 +86,10 @@ export default function HowToPlayModal({ onClose }: HowToPlayModalProps) {
                       {/* Goal Section */}
                       <div>
                         <SectionLabel text={t.rules.theGoal} />
-                        <p className="font-serif text-sm text-[#ffe58f] leading-relaxed opacity-90 px-2" dangerouslySetInnerHTML={{ __html: t.rules.goalDesc }} />
+                        <div className="font-serif text-sm text-[#ffe58f] leading-relaxed opacity-90 px-2 space-y-2">
+                          <p>{(t.rules.goalDesc as any).main || t.rules.goalDesc}</p>
+                          {(t.rules.goalDesc as any).sub && <p>{(t.rules.goalDesc as any).sub}</p>}
+                        </div>
                       </div>
 
                       {/* Roles Section */}

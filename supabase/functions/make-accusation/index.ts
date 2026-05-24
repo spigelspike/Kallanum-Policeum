@@ -2,18 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
 import { checkRateLimit } from "../_shared/rateLimit.ts";
 
-const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = true;
-  return { "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
-}
-function jsonError(msg: string, cors: Record<string, string>, status = 400): Response {
-  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...cors, "Content-Type": "application/json" } });
-}
-function jsonSuccess(data: Record<string, unknown>, cors: Record<string, string>): Response {
-  return new Response(JSON.stringify(data), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
-}
+import { getCorsHeaders, handleCors, jsonError, jsonSuccess, isRoomExpired as isExpired } from "../_shared/cors.ts";
 function isExpired(ea: string | null): boolean { return ea ? new Date(ea) < new Date() : false; }
 
 const THIEF_SURVIVAL_POINTS = 500;

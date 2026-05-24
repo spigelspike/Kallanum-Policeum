@@ -3,6 +3,7 @@ import AgoraRTC from 'agora-rtc-sdk-ng'
 import { useGameStore } from '../../stores/gameStore'
 import { useVoiceStore } from '../../stores/voiceStore'
 import { useEffect, useRef, useState } from 'react'
+import { supabase } from '../../lib/supabase'
 
 // Create a single global client instance for Agora
 // We use the RTC mode and vp8 codec which is standard for high quality audio/video
@@ -57,11 +58,43 @@ export default function AgoraVoiceManager() {
     let micTrack: any | null = null
     const numericUid = getNumericUid(myPlayerId)
 
+    const getAgoraToken = async (rCode: string, uId: number) => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agora-token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify({ roomCode: rCode, uid: uId })
+        }
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch Agora token')
+      }
+      const { token } = await response.json()
+      return token
+    }
+
     const setupVoice = async () => {
       try {
         console.log("[Agora] Joining channel:", roomCode, "with UID:", numericUid)
-        await client.join(appId, roomCode, null, numericUid)
+        const token = await getAgoraToken(roomCode, numericUid)
+        await client.join(appId, roomCode, token, numericUid)
         
+        client.on('token-privilege-will-expire', async () => {
+          if (!active) return
+          console.log("[Agora] Token expiring, renewing...")
+          try {
+            const newToken = await getAgoraToken(roomCode, numericUid)
+            await client.renewToken(newToken)
+          } catch(e) {
+            console.error("[Agora] Failed to renew token", e)
+          }
+        })
+
         if (!active) {
           await client.leave()
           return

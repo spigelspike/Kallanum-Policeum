@@ -3,29 +3,32 @@
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:4173",
-  // Add your production Vercel domain here:
-  // "https://kallanumpoliceum.vercel.app",
+  "https://kallanumpoliceum.vercel.app"
 ];
 
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = true;
+  const isAllowed = ALLOWED_ORIGINS.includes(origin);
 
   return {
     "Access-Control-Allow-Origin": isAllowed ? origin : "",
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Credentials": "true",
   };
 }
 
-export function checkOrigin(req: Request): Response | null {
-  const origin = req.headers.get("Origin") ?? "";
+export function handleCors(req: Request): Response | null {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders(req)
+    });
+  }
+  const origin = req.headers.get('Origin') ?? '';
   if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-    return new Response(JSON.stringify({ error: "Forbidden origin" }), {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
       status: 403,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
     });
   }
   return null;

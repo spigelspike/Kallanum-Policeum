@@ -120,29 +120,7 @@ export default function DiscussionPhase() {
         </div>
       )}
 
-      {/* Animated Timer Bar */}
-      <div className={`w-full max-w-[180px] sm:max-w-[220px] mt-1 relative h-6 rounded-full overflow-hidden border shadow-lg ${timeLeft <= 10 ? 'border-red-500/60 animate-pulse' : 'border-[#c89f59]/40'}`} style={{
-        background: 'linear-gradient(180deg, #1a0f08, #0a0604)',
-        boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.9)'
-      }}>
-        {/* Progress Fill */}
-        <div 
-          className="absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear"
-          style={{ 
-            width: `${(timeLeft / 60) * 100}%`,
-            background: timeLeft <= 10 
-              ? 'linear-gradient(90deg, #7f1d1d, #ef4444)' 
-              : 'linear-gradient(90deg, #7a5a18, #d4af37)',
-            boxShadow: timeLeft <= 10 ? '0 0 15px rgba(239,68,68,0.8)' : '0 0 10px rgba(212,175,55,0.4)',
-          }}
-        />
-        {/* Text Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className={`font-serif font-black text-[10px] sm:text-[11px] tracking-[0.25em] uppercase z-10 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] ${timeLeft <= 10 ? 'text-[#fee2e2]' : 'text-[#fff8e1]'}`}>
-            {timeLeft === 0 ? t.game.timeUp : `0:${timeLeft.toString().padStart(2, '0')}`}
-          </span>
-        </div>
-      </div>
+
 
       {/* Phase indicator */}
       {isPolicePhase && (
@@ -229,6 +207,33 @@ export default function DiscussionPhase() {
   return (
     <>
       <TutorialOverlay />
+
+      {/* Absolute Timer Bar in Top Left */}
+      <div className="fixed top-4 left-4 z-50">
+        <div className={`w-[120px] sm:w-[150px] relative h-6 rounded-full overflow-hidden border shadow-lg ${timeLeft <= 10 ? 'border-red-500/60 animate-pulse' : 'border-[#c89f59]/40'}`} style={{
+          background: 'linear-gradient(180deg, #1a0f08, #0a0604)',
+          boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.9)'
+        }}>
+          {/* Progress Fill */}
+          <div 
+            className="absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear"
+            style={{ 
+              width: `${(timeLeft / 60) * 100}%`,
+              background: timeLeft <= 10 
+                ? 'linear-gradient(90deg, #7f1d1d, #ef4444)' 
+                : 'linear-gradient(90deg, #7a5a18, #d4af37)',
+              boxShadow: timeLeft <= 10 ? '0 0 15px rgba(239,68,68,0.8)' : '0 0 10px rgba(212,175,55,0.4)',
+            }}
+          />
+          {/* Text Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className={`font-serif font-black text-[10px] sm:text-[11px] tracking-[0.25em] uppercase z-10 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] ${timeLeft <= 10 ? 'text-[#fee2e2]' : 'text-[#fff8e1]'}`}>
+              {timeLeft === 0 ? t.game.timeUp : `0:${timeLeft.toString().padStart(2, '0')}`}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <GameTableLayout
         players={players}
         myPlayerId={myPlayerId}

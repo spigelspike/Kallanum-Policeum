@@ -1,28 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
 
-const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = true;
-  return { 
-    "Access-Control-Allow-Origin": isAllowed ? (origin || "*") : "", 
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", 
-    "Access-Control-Allow-Methods": "POST, OPTIONS" 
-  };
-}
-
-function jsonError(msg: string, cors: Record<string, string>, status = 400): Response {
-  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...cors, "Content-Type": "application/json" } });
-}
-
-function jsonSuccess(data: Record<string, unknown>, cors: Record<string, string>): Response {
-  return new Response(JSON.stringify(data), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
-}
+import { getCorsHeaders, handleCors, jsonError, jsonSuccess } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
   const cors = getCorsHeaders(req);
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
   if (req.method !== "POST") return jsonError("Method not allowed", cors, 405);
 
   const authHeader = req.headers.get("Authorization");
