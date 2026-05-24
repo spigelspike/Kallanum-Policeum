@@ -13,11 +13,13 @@ export default function RoleReveal() {
     if (myRole && !dismissed) {
       setVisible(true)
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [myRole, dismissed])
 
   // Reset dismissed state when role changes (new round)
   useEffect(() => {
     setDismissed(false)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [myRole])
 
   if (!visible || !myRole) return null

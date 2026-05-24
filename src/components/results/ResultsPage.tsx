@@ -91,7 +91,7 @@ export default function ResultsPage() {
       }
     }
     loadResults()
-  }, [roomCode, finalScores, setFinalScores])
+  }, [roomCode, finalScores, setFinalScores, players])
 
   function handleLobbyRedirect() {
     playClick()

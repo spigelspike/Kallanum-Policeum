@@ -27,6 +27,7 @@ export function useRealtimeRoom({
   const navigate = useNavigate()
   const [connected, setConnected] = useState(false)
   const [statusStr, setStatusStr] = useState<string>('CONNECTING')
+  const [channelObj, setChannelObj] = useState<RealtimeChannel | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   // Use refs to avoid stale closures in channel callbacks
@@ -75,6 +76,7 @@ export function useRealtimeRoom({
     })
 
     channelRef.current = channel
+    setChannelObj(channel)
 
     // ── Security: Verify broadcast authenticity ──
     const verifyBroadcastPhase = async (expectedPhase: string): Promise<boolean> => {
@@ -317,6 +319,7 @@ export function useRealtimeRoom({
       clearTimeout(retryTimeoutId)
       setConnected(false)
       channelRef.current = null
+      setChannelObj(null)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -354,6 +357,6 @@ export function useRealtimeRoom({
     }
   }, [isMuted, myPlayerId, connected])
 
-  return { channel: channelRef.current, connected, broadcastPoint, broadcastEmote, status: statusStr }
+  return { channel: channelObj, connected, broadcastPoint, broadcastEmote, status: statusStr }
 }
 

@@ -74,7 +74,7 @@ export default function RoundResult() {
     } else {
       playLose()
     }
-  }, [lastResult?.correctGuess])
+  }, [lastResult])
 
   if (!room || !lastResult) return null
 

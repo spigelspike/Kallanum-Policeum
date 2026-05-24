@@ -69,6 +69,7 @@ export default function WorldChat() {
     } else {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [setWorldChatMessages])
 
   // Ably Pub/Sub & Presence
@@ -250,6 +251,7 @@ export default function WorldChat() {
             const showHeader = idx === 0 || worldChatMessages[idx - 1].playerId !== msg.playerId || msg.timestamp - worldChatMessages[idx - 1].timestamp > 60000
 
             // Format relative time (e.g. "2m ago", "just now")
+            // eslint-disable-next-line react-hooks/purity
             const diffMs = Date.now() - msg.timestamp
             let timeStr = t.chat.justNow
             if (diffMs > 3600000) timeStr = `${Math.floor(diffMs / 3600000)}${t.chat.hours} ${t.chat.ago}`

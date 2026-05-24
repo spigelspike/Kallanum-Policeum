@@ -65,6 +65,7 @@ export default function PoliceSelection({ selectedId, onClearSelection, timeLeft
       // Auto-accuse oneself to guarantee the Thief wins on timeout
       handleAccuse(myPlayerId!)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   }, [timeLeft, submitted, loading, myPlayerId])
 
   if (submitted) {
