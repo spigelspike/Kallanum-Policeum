@@ -3,6 +3,21 @@ import { sendBroadcast } from "../_shared/broadcast.ts";
 
 import { getCorsHeaders, handleCors, jsonError, isRoomExpired as isExpired } from "../_shared/cors.ts";
 
+function isValidUsername(username: unknown): username is string {
+  if (typeof username !== "string") return false;
+  const trimmed = username.trim();
+  return trimmed.length > 0 && trimmed.length <= 20 && /^[a-zA-Z0-9 ]+$/.test(trimmed);
+}
+
+function isValidRoomCode(code: unknown): code is string {
+  if (typeof code !== "string") return false;
+  return /^[A-Z0-9]{6}$/i.test(code);
+}
+
+const VALID_AVATAR_KEYS = ["male1", "male2", "male3", "female1", "female2", "female3"];
+function isValidAvatarKey(value: unknown): value is string {
+  return typeof value === "string" && VALID_AVATAR_KEYS.includes(value);
+}
 Deno.serve(async (req) => {
   const cors = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
