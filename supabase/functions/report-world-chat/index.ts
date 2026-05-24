@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3"
+import { checkRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +29,11 @@ serve(async (req) => {
     }
 
     const reporterId = user.id
+
+    const isAllowed = await checkRateLimit(supabase, reporterId, "report_world_chat", 60, 3);
+    if (!isAllowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait.' }), { status: 429, headers: corsHeaders })
+    }
 
     // 2. Parse payload
     const { messageId } = await req.json()

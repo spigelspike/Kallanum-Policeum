@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 
@@ -43,6 +44,9 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { headers: { Authorization: `Bearer ${serviceRoleKey}` } },
   });
+
+  const isAllowed = await checkRateLimit(admin, user.id, "reset_game", 3, 1);
+  if (!isAllowed) return jsonError("Rate limit exceeded. Please wait.", cors, 429);
 
   let body: { roomId?: unknown };
   try { 

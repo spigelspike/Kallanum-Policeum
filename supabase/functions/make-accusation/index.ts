@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendBroadcast } from "../_shared/broadcast.ts";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
 
 const ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:4173"];
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -35,6 +36,9 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { headers: { Authorization: `Bearer ${serviceRoleKey}` } },
   });
+
+  const isAllowed = await checkRateLimit(admin, user.id, "make_accusation", 3, 1);
+  if (!isAllowed) return jsonError("Rate limit exceeded. Please wait.", cors, 429);
 
   let body: { roomId?: unknown; accusedPlayerId?: unknown };
   try { body = await req.json(); } catch { return jsonError("Invalid JSON body", cors); }
