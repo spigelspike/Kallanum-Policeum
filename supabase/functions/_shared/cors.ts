@@ -3,7 +3,9 @@
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:4173",
-  "https://kallanumpoliceum.vercel.app"
+  "https://kallanumpoliceum.vercel.app",
+  "https://kallanumpoliceum.online",
+  "https://www.kallanumpoliceum.online"
 ];
 
 export function getCorsHeaders(req: Request): Record<string, string> {
