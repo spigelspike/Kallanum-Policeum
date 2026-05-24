@@ -125,6 +125,11 @@ export default function AgoraVoiceManager() {
           console.log("[Agora] Join/Publish aborted (likely due to room change or StrictMode cleanup).")
         } else {
           console.error("[Agora] Error during channel join or publish:", err)
+          if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError') || err?.message?.includes('Permission denied')) {
+            alert("Voice Chat Error: Microphone access was denied. Please allow microphone permissions in your browser settings and refresh the page to use Voice Chat.")
+          } else if (err?.message?.includes('Failed to fetch Agora token')) {
+            alert("Voice Chat Error: Server failed to generate a secure voice token. The game owner needs to configure Agora Secrets.")
+          }
         }
       }
     }
