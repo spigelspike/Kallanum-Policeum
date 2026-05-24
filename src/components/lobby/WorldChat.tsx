@@ -23,6 +23,7 @@ export default function WorldChat() {
   const [sending, setSending] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [reportingId, setReportingId] = useState<string | null>(null)
+  const [connectionState, setConnectionState] = useState<string>('connecting')
 
   const channelRef = useRef<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -80,6 +81,14 @@ export default function WorldChat() {
     const channel = client.channels.get('world-chat')
     channelRef.current = channel
 
+    // Track connection state
+    setConnectionState(client.connection.state)
+    const onConnectionChange = (stateChange: any) => {
+      console.log('[Ably] Connection state:', stateChange.current)
+      setConnectionState(stateChange.current)
+    }
+    client.connection.on(onConnectionChange)
+
     // Message subscription
     const onMessage = (msg: any) => {
       console.log('[Ably] Received message:', msg)
@@ -111,7 +120,8 @@ export default function WorldChat() {
       channel.presence.leave()
       channel.presence.unsubscribe('enter', updateCount)
       channel.presence.unsubscribe('leave', updateCount)
-      channel.unsubscribe(onMessage)
+      channel.unsubscribe('message', onMessage)
+      client.connection.off(onConnectionChange)
       // Do not close client as it is a singleton
     }
   }, [myPlayerId, name, addWorldChatMessage, setWorldChatOnlineCount])
@@ -220,9 +230,15 @@ export default function WorldChat() {
           </svg>
           {t.chat.worldChat}
         </h2>
-        <div className="flex items-center gap-2 text-xs text-[#c89f59]/80 font-medium bg-[#0d0704] px-2 py-1 rounded border border-[#5a3e15]/30">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></span>
-          {worldChatOnlineCount} {t.chat.online}
+        <div className="flex items-center gap-2 text-xs text-[#c89f59]/80 font-medium bg-[#0d0704] px-2 py-1 rounded border border-[#5a3e15]/30" title={`Status: ${connectionState}`}>
+          {connectionState === 'connected' ? (
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></span>
+          ) : connectionState === 'failed' || connectionState === 'suspended' ? (
+            <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+          ) : (
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          )}
+          <span>{worldChatOnlineCount} {t.chat.online}</span>
         </div>
       </div>
 
