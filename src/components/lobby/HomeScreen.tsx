@@ -150,8 +150,8 @@ export default function HomeScreen() {
           </button>
         </div>
 
-        {/* Absolute Report Bug Button */}
-        <div className="absolute bottom-24 md:bottom-4 left-4 z-50 flex">
+        {/* Absolute Report Bug Button (Desktop only) */}
+        <div className="absolute bottom-4 left-4 z-50 hidden md:flex">
           <button
             onClick={() => { playClick(); setShowBugReport(true); }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 hover:bg-red-900/50 hover:border-red-500/50 transition-all text-white/60 hover:text-red-400 text-xs font-serif tracking-widest uppercase shadow-lg"
@@ -159,8 +159,7 @@ export default function HomeScreen() {
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/>
             </svg>
-            <span className="hidden sm:inline">{t.home.reportBug}</span>
-            <span className="inline sm:hidden">Report</span>
+            {t.home.reportBug}
           </button>
         </div>
 
@@ -172,18 +171,31 @@ export default function HomeScreen() {
               <img src={typoLogo} alt="Kallanum Policeum" className="w-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.95)]" />
             </div>
 
-            {hasProfile && (
-              <button 
-                onClick={() => { playClick(); setShowEditProfile(true) }}
-                className="flex items-center gap-3 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg animate-in fade-in duration-1000 mb-8 md:mb-12 hover:bg-black/70 hover:border-amber-400/50 transition-all group"
+            <div className="flex flex-col items-center gap-3 mb-8 md:mb-12">
+              {hasProfile && (
+                <button 
+                  onClick={() => { playClick(); setShowEditProfile(true) }}
+                  className="flex items-center gap-3 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg animate-in fade-in duration-1000 hover:bg-black/70 hover:border-amber-400/50 transition-all group"
+                >
+                  {avatar && <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-amber-400/50 group-hover:scale-110 transition-transform" />}
+                  <span className="text-white font-bold text-sm uppercase tracking-wider">{name}</span>
+                  <svg className="w-4 h-4 text-white/50 group-hover:text-amber-400 ml-1 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Mobile Report Bug Button */}
+              <button
+                onClick={() => { playClick(); setShowBugReport(true); }}
+                className="flex md:hidden items-center gap-2 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10 hover:bg-red-900/50 hover:border-red-500/50 transition-all text-white/50 hover:text-red-400 text-[10px] font-serif tracking-widest uppercase shadow-sm animate-in fade-in duration-1000"
               >
-                {avatar && <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-amber-400/50 group-hover:scale-110 transition-transform" />}
-                <span className="text-white font-bold text-sm uppercase tracking-wider">{name}</span>
-                <svg className="w-4 h-4 text-white/50 group-hover:text-amber-400 ml-1 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/>
                 </svg>
+                {t.home.reportBug}
               </button>
-            )}
+            </div>
           </div>
 
           {/* Bottom Actions Area */}
