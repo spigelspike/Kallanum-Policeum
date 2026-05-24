@@ -34,6 +34,8 @@ serve(async (req) => {
 
     // Restrict capabilities to only subscribe and presence on world-chat
     const tokenParams = {
+      keyName: keyName,
+      timestamp: Date.now(),
       clientId: user.id,
       capability: JSON.stringify({
         "world-chat": ["subscribe", "presence"]
