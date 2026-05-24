@@ -6,7 +6,7 @@ import { playClick } from '../../utils/sounds'
 export default function VoiceControls() {
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceStore()
   const { t } = useLanguageStore()
-  const myAvatar = useProfileStore((s) => s.myAvatar)
+  const myAvatar = useProfileStore((s) => s.avatar)
 
   return (
     <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">

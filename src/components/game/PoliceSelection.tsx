@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useGameStore } from '../../stores/gameStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
@@ -11,7 +11,7 @@ interface PoliceSelectionProps {
   timeLeft: number
 }
 
-export default function PoliceSelection({ selectedId, onClearSelection, timeLeft }: PoliceSelectionProps) {
+export default function PoliceSelection({ selectedId, onClearSelection }: PoliceSelectionProps) {
   const room = useGameStore((s) => s.room)
   const players = useGameStore((s) => s.players)
   const myPlayerId = useGameStore((s) => s.myPlayerId)
