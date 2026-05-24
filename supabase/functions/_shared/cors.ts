@@ -1,19 +1,10 @@
 // Shared CORS and utility functions for all Edge Functions
 
-const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "https://kallanumpoliceum.vercel.app",
-  "https://kallanumpoliceum.online",
-  "https://www.kallanumpoliceum.online"
-];
+const ALLOWED_ORIGINS = ["*"];
 
 export function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const isAllowed = ALLOWED_ORIGINS.includes(origin);
-
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
@@ -24,13 +15,6 @@ export function handleCors(req: Request): Response | null {
     return new Response(null, {
       status: 204,
       headers: getCorsHeaders(req)
-    });
-  }
-  const origin = req.headers.get('Origin') ?? '';
-  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403,
-      headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
     });
   }
   return null;
