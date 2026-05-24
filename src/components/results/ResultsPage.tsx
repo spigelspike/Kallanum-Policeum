@@ -25,7 +25,7 @@ export default function ResultsPage() {
   const { t } = useLanguageStore()
   
   const { joinRoom } = useRoom()
-  const { name } = useProfileStore()
+  const { name, avatar: myAvatar } = useProfileStore()
 
   const [localScores, setLocalScores] = useState<FinalScore[]>([])
   const [loading, setLoading] = useState(false)
@@ -242,7 +242,15 @@ export default function ResultsPage() {
               boxShadow: '0 10px 30px -10px rgba(148, 163, 184, 0.2), inset 0 0 40px rgba(0,0,0,0.8)'
             }}>
               <div className="w-20 h-20 rounded-full border-2 border-[#94a3b8] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(148,163,184,0.3)]">
-                <img src={avatarKeyToUrl((secondPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${secondPlace.username}`} alt={secondPlace.username} className="w-full h-full object-cover" />
+                {avatarKeyToUrl((secondPlace as any).avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                  <img src={avatarKeyToUrl((secondPlace as any).avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
               <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{secondPlace.username}</h3>
               <p className="text-[#3b82f6] font-mono font-bold">{secondPlace.totalScore} PTS</p>
@@ -271,7 +279,15 @@ export default function ResultsPage() {
                 <div className="absolute inset-0 bg-[#d4af37] opacity-20 blur-xl rounded-full" />
                 
                 <div className="absolute inset-1 rounded-full border-[3px] border-[#d4af37] overflow-hidden bg-black shadow-[0_0_20px_rgba(212,175,55,0.6)] z-10">
-                  <img src={avatarKeyToUrl((firstPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firstPlace.username}`} alt={firstPlace.username} className="w-full h-full object-cover" />
+                  {avatarKeyToUrl((firstPlace as any).avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                    <img src={avatarKeyToUrl((firstPlace as any).avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg className="w-10 h-10 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -299,7 +315,15 @@ export default function ResultsPage() {
               boxShadow: '0 10px 30px -10px rgba(139, 69, 19, 0.3), inset 0 0 40px rgba(0,0,0,0.8)'
             }}>
               <div className="w-20 h-20 rounded-full border-2 border-[#b87333] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(184,115,51,0.3)]">
-                <img src={avatarKeyToUrl((thirdPlace as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${thirdPlace.username}`} alt={thirdPlace.username} className="w-full h-full object-cover" />
+                {avatarKeyToUrl((thirdPlace as any).avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                  <img src={avatarKeyToUrl((thirdPlace as any).avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
               <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{thirdPlace.username}</h3>
               <p className="text-[#d97706] font-mono font-bold">{thirdPlace.totalScore} PTS</p>
@@ -351,7 +375,15 @@ export default function ResultsPage() {
                   <div className="flex items-center gap-3">
                     <span className="w-6 text-center text-sm font-black text-[#8a6b20]">#{player.rank}</span>
                     <div className="w-8 h-8 rounded-full border border-[#d4af37]/50 overflow-hidden">
-                       <img src={avatarKeyToUrl((player as any).avatarKey) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`} alt="" className="w-full h-full object-cover" />
+                      {avatarKeyToUrl((player as any).avatarKey) || (player.playerId === myPlayerId ? myAvatar : null) ? (
+                        <img src={avatarKeyToUrl((player as any).avatarKey) || (player.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          </svg>
+                        </div>
+                      )}
                     </div>
                     <span className="font-bold text-slate-200">{player.username}</span>
                   </div>

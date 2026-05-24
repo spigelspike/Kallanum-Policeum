@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
-import { useSoundStore } from '../../stores/soundStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { playClick } from '../../utils/sounds'
 import { supabase } from '../../lib/supabase'
 import { useLanguageStore } from '../../stores/languageStore'
 import lobbyBgMobile from '../../assets/lobby.webp'
 import lobbyBgDesktop from '../../assets/lobby_desktop.webp'
-import bgMusic from '../../assets/sound/game_bg.mp3'
 
 export default function WaitingLobby() {
   const navigate = useNavigate()
@@ -27,7 +25,6 @@ export default function WaitingLobby() {
   const isHost = room?.hostId === myPlayerId
   const playerCount = players.length
   const canStart = isHost && playerCount >= 3
-  const { isMuted } = useSoundStore()
 
   async function handleStartGame() {
     playClick()
@@ -100,8 +97,6 @@ export default function WaitingLobby() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center p-4">
-      {/* Background Music */}
-      <audio src={bgMusic} autoPlay loop muted={isMuted} />
       
       {/* Backgrounds */}
       <div 

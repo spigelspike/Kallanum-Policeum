@@ -12,7 +12,6 @@ import ReportBugModal from './ReportBugModal'
 import mainMenuDesktopBg from '../../assets/main_menu_desktop.webp'
 import mobileBg from '../../assets/main_menu_bg.webp'
 import typoLogo from '../../assets/typo_logo.webp'
-import bgMusic from '../../assets/sound/game_bg.mp3'
 
 import WorldChat from './WorldChat'
 import LanguageToggle from '../common/LanguageToggle'
@@ -100,8 +99,6 @@ export default function HomeScreen() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-950 pb-16 md:pb-0">
-      {/* Background Music (Autoplays when unmuted if browser allows, otherwise waits for interaction) */}
-      <audio src={bgMusic} autoPlay loop muted={isMuted} />
 
       {/* Profile Creation / Edit Modal */}
       {(!hasProfile || showEditProfile) && (
