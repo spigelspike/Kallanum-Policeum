@@ -83,12 +83,16 @@ export default function WorldChat() {
     // Message subscription
     const onMessage = (msg: any) => {
       console.log('[Ably] Received message:', msg)
-      if (msg.name === 'message' || msg.data?.message) {
-        addWorldChatMessage(msg.data)
+      let payload = msg.data
+      if (typeof payload === 'string') {
+        try { payload = JSON.parse(payload) } catch (e) {}
+      }
+      if (payload && payload.message) {
+        addWorldChatMessage(payload)
       }
     }
-    // Subscribe to ALL events on the channel
-    channel.subscribe(onMessage)
+    // Subscribe to specifically 'message' events
+    channel.subscribe('message', onMessage)
 
     // Presence update helper
     const updateCount = async () => {
