@@ -10,27 +10,38 @@ interface BuyMeChaiModalProps {
 const MY_UPI_ID = "your_upi_id@bank"
 const MY_NAME = "Developer"
 
+const OPTIONS = [
+  { id: 'chai', name: 'Chai', icon: '☕', amount: 20 },
+  { id: 'snacks', name: 'Chai + Snacks', icon: '🍪', amount: 40 },
+  { id: 'shawarma', name: 'Shawarma', icon: '🌯', amount: 120 },
+  { id: 'mandhi', name: 'Mandhi', icon: '🍗', amount: 250 },
+]
+
 export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps) {
-  const [copied, setCopied] = useState(false)
+  const [selectedOption, setSelectedOption] = useState<string>('chai')
+  const [customAmount, setCustomAmount] = useState<string>('')
 
   if (!isOpen) return null
 
+  const currentAmount = selectedOption === 'custom' 
+    ? (parseFloat(customAmount) || 0) 
+    : (OPTIONS.find(o => o.id === selectedOption)?.amount || 0)
+
   // Generate UPI Payment URL
-  const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MY_NAME)}&cu=INR`
+  const baseUpiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MY_NAME)}&cu=INR`
+  const upiUrl = currentAmount > 0 ? `${baseUpiUrl}&am=${currentAmount}` : baseUpiUrl
   
   // Generate QR Code Image URL using a free public API
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}&color=0d0704&bgcolor=ffe58f`
 
-  const handleCopy = () => {
-    playClick()
-    navigator.clipboard.writeText(MY_UPI_ID)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   const handleClose = () => {
     playClick()
     onClose()
+  }
+
+  const handleOptionClick = (id: string) => {
+    playClick()
+    setSelectedOption(id)
   }
 
   return (
@@ -90,59 +101,76 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                   Buy Me a Chai
                 </h2>
                 
-                <p className="text-[#c89f59] text-center text-sm sm:text-base mb-6 z-10">
-                  If you enjoy catching the Kallan, consider fueling the developer!
-                </p>
-
-                {/* QR Code Container */}
-                <div className="bg-[#ffe58f] p-3 rounded-xl shadow-[0_0_30px_rgba(212,175,55,0.2)] mb-6 z-10">
-                  <div className="bg-white p-1 rounded-lg">
-                    <a href={upiUrl} target="_blank" rel="noopener noreferrer">
-                      <img 
-                        src={qrCodeUrl} 
-                        alt="UPI QR Code" 
-                        className="w-40 h-40 sm:w-48 sm:h-48 object-contain"
-                      />
-                    </a>
-                  </div>
-                  <p className="text-[#593d19] text-center text-xs mt-2 font-bold font-sans">
-                    Scan with any UPI app
-                  </p>
+                {/* Options Grid */}
+                <div className="w-full grid grid-cols-2 gap-2 mb-4 z-10">
+                  {OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleOptionClick(opt.id)}
+                      className={`relative overflow-hidden p-2 rounded-lg border text-sm font-bold flex flex-col items-center justify-center gap-1 transition-all ${
+                        selectedOption === opt.id 
+                          ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#ffe58f] shadow-[0_0_15px_rgba(212,175,55,0.3)]' 
+                          : 'bg-black/40 border-[#5a3e15]/60 text-[#c89f59] hover:bg-black/60 hover:border-[#c89f59]/50'
+                      }`}
+                    >
+                      <span className="text-xl">{opt.icon}</span>
+                      <span className="text-[11px] uppercase tracking-wider">{opt.name}</span>
+                      <span className={`text-[10px] ${selectedOption === opt.id ? 'text-[#ffe58f]' : 'text-[#c89f59]/70'}`}>₹{opt.amount}</span>
+                    </button>
+                  ))}
                 </div>
 
-                {/* UPI ID Copy Box */}
-                <div className="w-full flex items-center justify-between bg-black/40 border border-[#c89f59]/30 rounded-lg p-3 z-10">
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="text-[10px] text-[#c89f59]/70 uppercase font-bold tracking-wider mb-0.5">UPI ID</span>
-                    <span className="text-[#ffe58f] font-mono text-sm sm:text-base truncate">{MY_UPI_ID}</span>
-                  </div>
-                  <button 
-                    onClick={handleCopy}
-                    className="ml-3 p-2 rounded bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-[#c89f59]"
-                    title="Copy UPI ID"
+                {/* Custom Amount */}
+                <div className="w-full mb-6 z-10">
+                  <div 
+                    onClick={() => handleOptionClick('custom')}
+                    className={`flex items-center w-full rounded-lg border transition-all ${
+                      selectedOption === 'custom'
+                        ? 'bg-[#d4af37]/20 border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.3)]'
+                        : 'bg-black/40 border-[#5a3e15]/60 hover:bg-black/60 hover:border-[#c89f59]/50'
+                    }`}
                   >
-                    {copied ? (
-                      <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </button>
+                    <div className="pl-3 py-2 text-[#c89f59] font-bold">
+                      <span className="mr-2">✍️</span> Custom: ₹
+                    </div>
+                    <input 
+                      type="number" 
+                      min="1"
+                      placeholder="Amount"
+                      value={customAmount}
+                      onChange={(e) => {
+                        setCustomAmount(e.target.value)
+                        setSelectedOption('custom')
+                      }}
+                      className="flex-1 bg-transparent border-none outline-none text-[#ffe58f] font-bold py-2 pr-3"
+                    />
+                  </div>
+                </div>
+
+                {/* QR Code Container (Desktop focused) */}
+                <div className="bg-[#ffe58f] p-3 rounded-xl shadow-[0_0_30px_rgba(212,175,55,0.2)] mb-2 z-10 hidden md:block">
+                  <div className="bg-white p-1 rounded-lg">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="UPI QR Code" 
+                      className="w-32 h-32 object-contain"
+                    />
+                  </div>
+                  <p className="text-[#593d19] text-center text-[10px] mt-2 font-bold font-sans uppercase">
+                    Scan to Pay {currentAmount > 0 ? `₹${currentAmount}` : ''}
+                  </p>
                 </div>
 
                 {/* Mobile Pay Button */}
                 <a 
                   href={upiUrl}
-                  className="w-full mt-4 py-3 rounded-lg flex items-center justify-center gap-2 font-bold text-[#38230f] transition-all hover:brightness-110 active:scale-95 z-10 md:hidden"
-                  style={{ background: 'linear-gradient(180deg, #ffe58f 0%, #d4af37 100%)' }}
+                  className="w-full mt-2 py-3.5 rounded-lg flex items-center justify-center gap-2 font-bold text-[#38230f] transition-all hover:brightness-110 active:scale-95 z-10"
+                  style={{ background: 'linear-gradient(180deg, #ffe58f 0%, #d4af37 100%)', boxShadow: '0 4px 15px rgba(212,175,55,0.3)' }}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
                   </svg>
-                  Pay with UPI App
+                  Proceed {currentAmount > 0 ? `(₹${currentAmount})` : ''}
                 </a>
 
               </div>
