@@ -6,8 +6,8 @@ interface BuyMeChaiModalProps {
   onClose: () => void
 }
 
-// ⚠️ REPLACE THIS WITH YOUR ACTUAL UPI ID
-const MY_UPI_ID = "shareefch1413@oksbi"
+// Load UPI ID securely from environment variables
+const MY_UPI_ID = import.meta.env.VITE_UPI_ID || "developer@upi"
 const MY_NAME = "Developer"
 
 const OPTIONS = [
@@ -45,9 +45,9 @@ const OPTIONS = [
     name: 'Shawarma', 
     icon: (
       <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2.5a5.5 5.5 0 0 0-5.5 5.5v3h11v-3a5.5 5.5 0 0 0-5.5-5.5Z" />
-        <path d="M5 15h14v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4Z" />
-        <path d="M3 11h18v4H3z" />
+        <path d="M6 11a6 6 0 0 1 12 0" />
+        <path d="M4 15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2" />
+        <path d="M3 13h18" />
       </svg>
     ), 
     amount: 120 
@@ -57,8 +57,9 @@ const OPTIONS = [
     name: 'Mandhi', 
     icon: (
       <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m8.6 14.4-4.3 4.3a2 2 0 0 1-2.8-2.8l1.3-1.3a2 2 0 0 1-1.4-3.4l1.3-1.3a2 2 0 0 1 3.4 1.4l1.3-1.3a2 2 0 0 1 2.8 2.8Z" />
-        <path d="M18.4 2.6a4.24 4.24 0 0 0-6 6L8.6 14.4l2.8 2.8 5.8-3.8a4.24 4.24 0 0 0 6-6 4.24 4.24 0 0 0-4.8-4.8Z" />
+        <path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9Z" />
+        <path d="M3 14h18" />
+        <path d="M12 3v2" />
       </svg>
     ), 
     amount: 250 
