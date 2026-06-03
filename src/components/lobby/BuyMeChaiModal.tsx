@@ -11,10 +11,56 @@ const MY_UPI_ID = "your_upi_id@bank"
 const MY_NAME = "Developer"
 
 const OPTIONS = [
-  { id: 'chai', name: 'Chai', icon: '☕', amount: 20 },
-  { id: 'snacks', name: 'Chai + Snacks', icon: '🍪', amount: 40 },
-  { id: 'shawarma', name: 'Shawarma', icon: '🌯', amount: 120 },
-  { id: 'mandhi', name: 'Mandhi', icon: '🍗', amount: 250 },
+  { 
+    id: 'chai', 
+    name: 'Chai', 
+    icon: (
+      <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+        <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+        <line x1="6" y1="2" x2="6" y2="4" />
+        <line x1="10" y1="2" x2="10" y2="4" />
+        <line x1="14" y1="2" x2="14" y2="4" />
+      </svg>
+    ), 
+    amount: 20 
+  },
+  { 
+    id: 'snacks', 
+    name: 'Chai + Snacks', 
+    icon: (
+      <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+        <path d="M8.5 8.5v.01" />
+        <path d="M16 12.5v.01" />
+        <path d="M12 16v.01" />
+        <path d="M11 12.5v.01" />
+        <path d="M8 14v.01" />
+      </svg>
+    ), 
+    amount: 40 
+  },
+  { 
+    id: 'shawarma', 
+    name: 'Shawarma', 
+    icon: (
+      <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v6Z" />
+        <path d="M17 5v14" />
+      </svg>
+    ), 
+    amount: 120 
+  },
+  { 
+    id: 'mandhi', 
+    name: 'Mandhi', 
+    icon: (
+      <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-1-4-1-4a3 3 0 0 1 6 0c0 2 0 4-1 6-.5 1-1 1.62-1 3a2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 1 0 5 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 0-2.5-2.5z" />
+      </svg>
+    ), 
+    amount: 250 
+  },
 ]
 
 export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps) {
@@ -113,7 +159,7 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                           : 'bg-black/40 border-[#5a3e15]/60 text-[#c89f59] hover:bg-black/60 hover:border-[#c89f59]/50'
                       }`}
                     >
-                      <span className="text-xl">{opt.icon}</span>
+                      <span className="flex items-center justify-center">{opt.icon}</span>
                       <span className="text-[11px] uppercase tracking-wider">{opt.name}</span>
                       <span className={`text-[10px] ${selectedOption === opt.id ? 'text-[#ffe58f]' : 'text-[#c89f59]/70'}`}>₹{opt.amount}</span>
                     </button>
@@ -130,8 +176,12 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                         : 'bg-black/40 border-[#5a3e15]/60 hover:bg-black/60 hover:border-[#c89f59]/50'
                     }`}
                   >
-                    <div className="pl-3 py-2 text-[#c89f59] font-bold">
-                      <span className="mr-2">✍️</span> Custom: ₹
+                    <div className="pl-3 py-2 text-[#c89f59] font-bold flex items-center">
+                      <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                      Custom: ₹
                     </div>
                     <input 
                       type="number" 
