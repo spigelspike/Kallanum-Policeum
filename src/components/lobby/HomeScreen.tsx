@@ -9,6 +9,7 @@ import { playClick } from '../../utils/sounds'
 import CreateProfileModal from './CreateProfileModal'
 import HowToPlayModal from './HowToPlayModal'
 import ReportBugModal from './ReportBugModal'
+import BuyMeChaiModal from './BuyMeChaiModal'
 import mainMenuDesktopBg from '../../assets/main_menu_desktop.webp'
 import mobileBg from '../../assets/main_menu_bg.webp'
 import typoLogo from '../../assets/typo_logo.webp'
@@ -57,6 +58,7 @@ export default function HomeScreen() {
   const [showHowToPlay, setShowHowToPlay] = useState(false)
   const [showBugReport, setShowBugReport] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showChaiModal, setShowChaiModal] = useState(false)
 
   // Sound Store
   const { isMuted, toggleMute } = useSoundStore()
@@ -111,6 +113,9 @@ export default function HomeScreen() {
       {/* Report Bug Modal */}
       {showBugReport && <ReportBugModal onClose={() => setShowBugReport(false)} />}
 
+      {/* Buy Me a Chai Modal */}
+      <BuyMeChaiModal isOpen={showChaiModal} onClose={() => setShowChaiModal(false)} />
+
       {/* --- Backgrounds --- */}
       <div
         className="hidden md:block absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80"
@@ -125,6 +130,17 @@ export default function HomeScreen() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8 px-4 sm:px-6 md:py-12 md:px-8">
 
         <LanguageToggle />
+
+        {/* Absolute Chai Button */}
+        <div className="absolute top-4 right-16 sm:right-20 z-50">
+          <button 
+            onClick={() => { playClick(); setShowChaiModal(true) }}
+            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/50 backdrop-blur-md border border-amber-400/30 hover:bg-amber-900/30 hover:border-amber-400/60 transition-all text-amber-200 hover:text-amber-100 shadow-[0_0_15px_rgba(212,175,55,0.15)] group animate-pulse"
+          >
+            <span className="text-sm sm:text-base group-hover:scale-110 transition-transform">☕</span>
+            <span className="hidden sm:inline font-serif text-xs font-bold tracking-wider">Buy a Chai</span>
+          </button>
+        </div>
 
         {/* Absolute Mute Toggle Button */}
         <div className="absolute top-4 right-4 z-50">
