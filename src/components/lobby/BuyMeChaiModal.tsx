@@ -7,7 +7,7 @@ interface BuyMeChaiModalProps {
 }
 
 // ⚠️ REPLACE THIS WITH YOUR ACTUAL UPI ID
-const MY_UPI_ID = "your_upi_id@bank"
+const MY_UPI_ID = "shareefch1413@oksbi"
 const MY_NAME = "Developer"
 
 const OPTIONS = [
@@ -45,8 +45,9 @@ const OPTIONS = [
     name: 'Shawarma', 
     icon: (
       <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v6Z" />
-        <path d="M17 5v14" />
+        <path d="M12 2.5a5.5 5.5 0 0 0-5.5 5.5v3h11v-3a5.5 5.5 0 0 0-5.5-5.5Z" />
+        <path d="M5 15h14v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-4Z" />
+        <path d="M3 11h18v4H3z" />
       </svg>
     ), 
     amount: 120 
@@ -56,7 +57,8 @@ const OPTIONS = [
     name: 'Mandhi', 
     icon: (
       <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-1-4-1-4a3 3 0 0 1 6 0c0 2 0 4-1 6-.5 1-1 1.62-1 3a2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 1 0 5 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 0-2.5-2.5z" />
+        <path d="m8.6 14.4-4.3 4.3a2 2 0 0 1-2.8-2.8l1.3-1.3a2 2 0 0 1-1.4-3.4l1.3-1.3a2 2 0 0 1 3.4 1.4l1.3-1.3a2 2 0 0 1 2.8 2.8Z" />
+        <path d="M18.4 2.6a4.24 4.24 0 0 0-6 6L8.6 14.4l2.8 2.8 5.8-3.8a4.24 4.24 0 0 0 6-6 4.24 4.24 0 0 0-4.8-4.8Z" />
       </svg>
     ), 
     amount: 250 
@@ -170,18 +172,19 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                 <div className="w-full mb-6 z-10">
                   <div 
                     onClick={() => handleOptionClick('custom')}
-                    className={`flex items-center w-full rounded-lg border transition-all ${
+                    className={`flex items-center w-full rounded-lg border transition-all px-3 py-2 ${
                       selectedOption === 'custom'
                         ? 'bg-[#d4af37]/20 border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.3)]'
                         : 'bg-black/40 border-[#5a3e15]/60 hover:bg-black/60 hover:border-[#c89f59]/50'
                     }`}
                   >
-                    <div className="pl-3 py-2 text-[#c89f59] font-bold flex items-center">
-                      <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="flex items-center text-[#c89f59] font-bold whitespace-nowrap">
+                      <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                       </svg>
-                      Custom: ₹
+                      <span className="mr-1">Custom:</span>
+                      <span>₹</span>
                     </div>
                     <input 
                       type="number" 
@@ -192,7 +195,7 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                         setCustomAmount(e.target.value)
                         setSelectedOption('custom')
                       }}
-                      className="flex-1 bg-transparent border-none outline-none text-[#ffe58f] font-bold py-2 pr-3"
+                      className="flex-1 w-full bg-transparent border-none outline-none text-[#ffe58f] font-bold px-2 placeholder-[#c89f59]/40 min-w-0"
                     />
                   </div>
                 </div>
