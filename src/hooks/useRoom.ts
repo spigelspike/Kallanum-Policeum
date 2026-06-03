@@ -9,6 +9,7 @@ interface UseRoomReturn {
   error: string | null
   createRoom: (username: string, totalRounds: number) => Promise<string | null>
   joinRoom: (username: string, code: string) => Promise<string | null>
+  quickPlay: () => Promise<string | null>
 }
 
 export function useRoom(): UseRoomReturn {
@@ -171,5 +172,62 @@ export function useRoom(): UseRoomReturn {
     }
   }
 
-  return { loading, error, createRoom, joinRoom }
+  async function quickPlay(): Promise<string | null> {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const token = await ensureAuth()
+      const profileName = useProfileStore.getState().name
+      const avatarKey = useProfileStore.getState().avatarKey
+
+      const response = await supabase.functions.invoke('quick-play', {
+        body: { action: 'join', username: profileName.trim(), avatarKey, totalRounds: 3 },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (response.error) {
+        let msg = response.error.message
+        if ('context' in response.error && typeof (response.error as any).context?.json === 'function') {
+          try {
+            const body = await (response.error as any).context.json()
+            if (body && body.error) msg = body.error
+          } catch (_) {}
+        }
+        setError(msg)
+        return null
+      }
+
+      const data = response.data as {
+        roomId: string
+        roomCode: string
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const room: Room = {
+        id: data.roomId,
+        code: data.roomCode,
+        hostId: user.id, // Will be corrected by reconcileFromDb if we joined an existing one
+        phase: 'WAITING',
+        currentRound: 1,
+        totalRounds: 3,
+        isQuickPlay: true,
+      }
+
+      setRoom(room)
+      setMyPlayerId(user.id)
+
+      return data.roomCode
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unexpected error'
+      setError(msg)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { loading, error, createRoom, joinRoom, quickPlay }
 }

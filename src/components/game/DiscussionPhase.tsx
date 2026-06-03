@@ -29,9 +29,11 @@ export default function DiscussionPhase() {
   const isPolicePhase = room.phase === 'DISCUSSION' || room.phase === 'POLICE_SELECTION'
 
   const [timeLeft, setTimeLeft] = useState(() => {
-    if (!room || !room.phaseEndsAt) return 60
+    if (!room || !room.phaseEndsAt) return 30
     return Math.max(0, Math.floor((new Date(room.phaseEndsAt).getTime() - Date.now()) / 1000))
   })
+  const [discussionEnded, setDiscussionEnded] = useState(false)
+  const [graceTimeLeft, setGraceTimeLeft] = useState(5)
 
   useEffect(() => {
     if (!room || room.phase !== 'DISCUSSION') return
@@ -41,6 +43,7 @@ export default function DiscussionPhase() {
         const diff = Math.floor((new Date(room.phaseEndsAt).getTime() - Date.now()) / 1000)
         if (diff <= 0) {
           clearInterval(interval)
+          setDiscussionEnded(true)
           return 0
         }
         return diff
@@ -50,10 +53,35 @@ export default function DiscussionPhase() {
   }, [room?.phase, room?.phaseEndsAt])
 
   useEffect(() => {
-    if (timeLeft <= 10 && timeLeft > 0) {
+    if (timeLeft <= 10 && timeLeft > 0 && !discussionEnded) {
       playClick() // Ticking sound effect for urgency
     }
-  }, [timeLeft])
+  }, [timeLeft, discussionEnded])
+
+  // Grace timer ticking effect
+  useEffect(() => {
+    if (!discussionEnded) return
+    if (graceTimeLeft <= 0) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setGraceTimeLeft((g) => {
+        if (g <= 1) {
+          clearInterval(interval)
+        }
+        return g - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [discussionEnded, graceTimeLeft])
+
+  useEffect(() => {
+    if (discussionEnded && graceTimeLeft > 0) {
+      playClick() // Speed up ticking during grace period
+    }
+  }, [discussionEnded, graceTimeLeft])
 
   const handleEmote = (emoji: string) => {
     if (!room || !myPlayerId) return
@@ -67,14 +95,14 @@ export default function DiscussionPhase() {
     useGameStore.getState().setEmote(myPlayerId, emoji)
   }
 
-  // ── Auto-fail if timeout or Police is offline ──
+  // ── Auto-fail if grace period timeout or Police is offline ──
   const autoFailTriggered = useRef(false)
   
   useEffect(() => {
     const policeIsDisconnected = policePlayer && !policePlayer.isConnected
-    
-    // Check if we need to auto-fail the police
-    if ((timeLeft === 0 || policeIsDisconnected) && room?.phase === 'DISCUSSION' && !autoFailTriggered.current) {
+    const shouldFail = (discussionEnded && graceTimeLeft <= 0) || policeIsDisconnected
+
+    if (shouldFail && room?.phase === 'DISCUSSION' && !autoFailTriggered.current) {
       autoFailTriggered.current = true
       const triggerAutoFail = async () => {
         try {
@@ -95,7 +123,67 @@ export default function DiscussionPhase() {
       }
       triggerAutoFail()
     }
-  }, [timeLeft, policePlayer?.isConnected, room?.phase, room?.id, policeId])
+  }, [discussionEnded, graceTimeLeft, policePlayer?.isConnected, room?.phase, room?.id, policeId])
+
+  // ── Bot Police auto-accusation (triggered during grace period) ──
+  const botAccusationTriggered = useRef(false)
+  
+  useEffect(() => {
+    if (!room || room.phase !== 'DISCUSSION') return
+    if (!policePlayer?.isBot) return
+    if (!discussionEnded) return
+    if (botAccusationTriggered.current) return
+
+    // Accuse at 3 seconds remaining in the grace period
+    if (graceTimeLeft === 3) {
+      botAccusationTriggered.current = true
+      const nonPolicePlayers = players.filter(p => p.id !== policeId)
+      if (nonPolicePlayers.length === 0) return
+
+      // Pick a random player to accuse (who is not the police themselves)
+      const target = nonPolicePlayers[Math.floor(Math.random() * nonPolicePlayers.length)]
+      
+      const triggerBotAccusation = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) return
+          await supabase.functions.invoke('make-accusation', {
+            body: { roomId: room.id, accusedPlayerId: target.id },
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          })
+        } catch (e) {
+          console.error('Bot Police accusation failed:', e)
+          botAccusationTriggered.current = false
+        }
+      }
+      triggerBotAccusation()
+    }
+  }, [room?.id, room?.phase, policePlayer?.isBot, policeId, players, discussionEnded, graceTimeLeft])
+
+  // Reset bot/auto-fail refs on new rounds
+  useEffect(() => {
+    botAccusationTriggered.current = false
+    autoFailTriggered.current = false
+    setDiscussionEnded(false)
+    setGraceTimeLeft(5)
+  }, [room?.currentRound])
+
+  // ── Bot emotes during discussion (random every ~15 seconds) ──
+  useEffect(() => {
+    if (!room || room.phase !== 'DISCUSSION') return
+    
+    const botPlayers = players.filter(p => p.isBot)
+    if (botPlayers.length === 0) return
+
+    const interval = setInterval(() => {
+      // Pick a random bot to emote
+      const bot = botPlayers[Math.floor(Math.random() * botPlayers.length)]
+      const emoji = EMOTES[Math.floor(Math.random() * EMOTES.length)]
+      useGameStore.getState().setEmote(bot.id, emoji)
+    }, 12000 + Math.random() * 6000) // 12-18 seconds
+
+    return () => clearInterval(interval)
+  }, [room?.phase, players])
 
   const handlePlayerTap = (id: string) => {
     if (id === myPlayerId) return
@@ -238,6 +326,23 @@ export default function DiscussionPhase() {
     <>
       <TutorialOverlay />
 
+      {/* 5-second Grace Period overlay (pointer-events-none so player selections are still clickable) */}
+      {discussionEnded && graceTimeLeft > 0 && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/40 pointer-events-none animate-in fade-in duration-300">
+          <div className="text-center p-6 max-w-sm rounded-xl border border-red-500/20 bg-gradient-to-b from-red-950/70 to-black/90 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse">
+            <span className="block font-serif font-black text-3xl sm:text-4xl uppercase tracking-widest text-red-500 mb-2 drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] animate-bounce">
+              {isPolice ? "ACCUSE NOW!" : "POLICE DECIDING..."}
+            </span>
+            <span className="block font-serif font-black text-7xl sm:text-8xl text-yellow-500 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)] animate-pulse">
+              {graceTimeLeft}
+            </span>
+            <span className="block text-xs text-white/80 font-bold tracking-wider uppercase mt-3 drop-shadow-md">
+              {isPolice ? "TAP A PLAYER ON THE TABLE!" : "The Police is making their final guess!"}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Absolute Timer Bar in Top Left */}
       <div className="fixed top-4 left-4 z-50">
         <div className={`w-[120px] sm:w-[150px] relative h-6 rounded-full overflow-hidden border shadow-lg ${timeLeft <= 10 ? 'border-red-500/60 animate-pulse' : 'border-[#c89f59]/40'}`} style={{
@@ -248,7 +353,7 @@ export default function DiscussionPhase() {
           <div 
             className="absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-linear"
             style={{ 
-              width: `${(timeLeft / 60) * 100}%`,
+              width: `${(timeLeft / 30) * 100}%`,
               background: timeLeft <= 10 
                 ? 'linear-gradient(90deg, #7f1d1d, #ef4444)' 
                 : 'linear-gradient(90deg, #7a5a18, #d4af37)',

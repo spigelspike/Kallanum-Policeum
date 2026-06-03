@@ -24,23 +24,34 @@ type MobileTab = 'play' | 'chat'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
-  const { loading, error, createRoom, joinRoom } = useRoom()
+  const { loading, error, createRoom, joinRoom, quickPlay } = useRoom()
 
-  const { hasProfile, name, avatar } = useProfileStore()
+  const { hasProfile, name, avatar, avatarKey } = useProfileStore()
   const { myPlayerId, setMyPlayerId } = useGameStore()
   const { t } = useLanguageStore()
 
+  // Sign in anonymously if profile is set but we don't have a player ID
   useEffect(() => {
     if (hasProfile && !myPlayerId) {
       supabase.auth.signInAnonymously().then(({ data, error }) => {
         if (!error && data?.user) {
           setMyPlayerId(data.user.id)
-          // Update metadata so edge functions can read the username
-          supabase.auth.updateUser({ data: { username: name } })
         }
       })
     }
-  }, [hasProfile, myPlayerId, name, setMyPlayerId])
+  }, [hasProfile, myPlayerId, setMyPlayerId])
+
+  // Keep player metadata (username, avatarKey) synced with Supabase Auth
+  useEffect(() => {
+    if (myPlayerId && name) {
+      supabase.auth.updateUser({
+        data: {
+          username: name,
+          avatar_key: avatarKey
+        }
+      })
+    }
+  }, [myPlayerId, name, avatarKey])
 
   useEffect(() => {
     if (error === "Room not found." || error === "This room has already started." || error === "This room has expired") {
@@ -90,6 +101,15 @@ export default function HomeScreen() {
     }
 
     const code = await joinRoom(name.trim(), roomCode.trim().toUpperCase())
+    if (code) {
+      navigate(`/room/${code}`)
+    }
+  }
+
+  async function handleQuickPlay() {
+    playClick()
+    setLocalError(null)
+    const code = await quickPlay()
     if (code) {
       navigate(`/room/${code}`)
     }
@@ -200,6 +220,21 @@ export default function HomeScreen() {
 
             {mode === 'idle' && (
               <>
+                {/* Quick Play Button (Emerald/Green) */}
+                <MainButton
+                  onClick={handleQuickPlay}
+                  title="Quick Play"
+                  subtitle="Instant game with bots"
+                  gradientOuter="from-[#059669] to-[#064e3b]"
+                  gradientInner="from-[#047857] to-[#065f46]"
+                  shadow="shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
+                  icon={
+                    <svg className="w-7 h-7 md:w-9 md:h-9" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+                    </svg>
+                  }
+                />
+
                 {/* Create Room Button (Blue) */}
                 <MainButton
                   onClick={() => { playClick(); setMode('create') }}

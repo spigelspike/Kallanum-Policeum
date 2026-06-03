@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useGameStore } from '../stores/gameStore'
@@ -62,6 +62,102 @@ export function useRealtimeRoom({
     roomRef.current = room
   }, [room])
 
+  // ── Reconcile player list from a broadcast payload ──
+  const reconcilePlayersFromPayload = useCallback((payloadPlayers: Player[]) => {
+    if (!payloadPlayers || !Array.isArray(payloadPlayers) || payloadPlayers.length === 0) return
+    // Merge: use payload as truth for scores, add any missing players
+    const currentPlayers = playersRef.current
+    const payloadMap = new Map(payloadPlayers.map(p => [p.id, p]))
+    const merged: Player[] = []
+    // Update existing players and collect IDs we've seen
+    const seenIds = new Set<string>()
+    for (const p of currentPlayers) {
+      const fromPayload = payloadMap.get(p.id)
+      if (fromPayload) {
+        merged.push({ ...p, ...fromPayload })
+      } else {
+        merged.push(p)
+      }
+      seenIds.add(p.id)
+    }
+    // Add any players from payload that we didn't have locally
+    for (const p of payloadPlayers) {
+      if (!seenIds.has(p.id)) {
+        merged.push(p)
+      }
+    }
+    setPlayers(merged)
+  }, [setPlayers])
+
+  // ── Reconcile from database (authoritative source) ──
+  const reconcileFromDb = useCallback(async () => {
+    const currentRoom = roomRef.current
+    if (!currentRoom) return
+    try {
+      // 1. Fetch Room details
+      const { data: dbRoom, error: roomErr } = await supabase
+        .from('rooms')
+        .select('phase, current_round, total_rounds, host_id, phase_ends_at, is_quick_play')
+        .eq('id', currentRoom.id)
+        .maybeSingle()
+
+      if (roomErr || !dbRoom) return
+
+      // 2. Fetch Police ID if game has started
+      let dbPoliceId: string | null = null
+      if (dbRoom.phase !== 'WAITING') {
+        const { data: roleData } = await supabase
+          .from('player_roles')
+          .select('player_id')
+          .eq('room_id', currentRoom.id)
+          .eq('round_number', dbRoom.current_round)
+          .eq('role', 'Police')
+          .maybeSingle()
+        if (roleData) {
+          dbPoliceId = roleData.player_id
+        }
+      }
+
+      // 3. Fetch Players
+      const { data: dbPlayers, error: playersErr } = await supabase
+        .from('room_players')
+        .select('player_id, username, score, is_connected, avatar_key, is_bot')
+        .eq('room_id', currentRoom.id)
+      if (playersErr || !dbPlayers) return
+
+      // 4. Apply all updates
+      setRoom({
+        ...currentRoom,
+        phase: dbRoom.phase as any,
+        currentRound: dbRoom.current_round,
+        totalRounds: dbRoom.total_rounds,
+        hostId: dbRoom.host_id,
+        phaseEndsAt: dbRoom.phase_ends_at,
+        isQuickPlay: dbRoom.is_quick_play,
+      })
+
+      if (dbPoliceId) {
+        setPoliceId(dbPoliceId)
+      }
+
+      const freshPlayers: Player[] = dbPlayers.map((p) => ({
+        id: p.player_id,
+        username: p.username,
+        score: p.score,
+        isConnected: p.is_connected,
+        isHost: p.player_id === dbRoom.host_id,
+        avatarKey: p.avatar_key ?? null,
+        isBot: p.is_bot ?? false,
+      }))
+      setPlayers(freshPlayers)
+
+      // 5. Trigger fetching of client's own role
+      fetchMyRole()
+    } catch (err) {
+      console.error('Reconciliation failed:', err)
+    }
+  }, [setPlayers, setRoom, setPoliceId, fetchMyRole])
+
   useEffect(() => {
     if (!roomId || !myPlayerId) return
 
@@ -121,52 +217,88 @@ export function useRealtimeRoom({
       setPlayers(playersRef.current.filter((p) => p.id !== payload.playerId))
     })
 
-    // ── Presence: sync (updates connection status only) ──
+    // ── Presence: sync (updates connection status + detects unknown players) ──
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState()
-      const presentIds = new Set<string>(Object.keys(state))
+      
+      // Extract playerIds from presence payloads
+      const presentIds = new Set<string>()
+      for (const presenceKey of Object.keys(state)) {
+        const presences = state[presenceKey] as any[]
+        for (const pres of presences) {
+          if (pres.playerId) {
+            presentIds.add(pres.playerId)
+          }
+        }
+      }
 
       if (playersRef.current.length > 0) {
-        setPlayers(
-          playersRef.current.map((p) => ({
-            ...p,
-            isConnected: presentIds.has(p.id),
-          }))
-        )
+        // Check if any present player is unknown locally
+        const knownIds = new Set(playersRef.current.map(p => p.id))
+        let hasUnknown = false
+        for (const pid of presentIds) {
+          // Ignore bots when checking for unknown human players in presence
+          if (pid.startsWith('bot-') || pid.startsWith('00000000-0000-0000-0000-')) continue
+          if (!knownIds.has(pid)) {
+            hasUnknown = true
+            break
+          }
+        }
+
+        // If unknown player detected, fetch full player list from DB
+        if (hasUnknown) {
+          reconcileFromDb()
+        } else {
+          // Just update connection status for known players
+          setPlayers(
+            playersRef.current.map((p) => ({
+              ...p,
+              isConnected: p.isBot ? true : presentIds.has(p.id),
+            }))
+          )
+        }
+      } else {
+        // If local players list is empty, fetch from DB to initialize it
+        reconcileFromDb()
       }
     })
 
     // ── Presence: leave → detect disconnections ──
-    channel.on('presence', { event: 'leave' }, ({ key }) => {
-      if (!key) return
-      updatePlayerConnection(key, false)
+    channel.on('presence', { event: 'leave' }, ({ leftPresences }) => {
+      if (!leftPresences || leftPresences.length === 0) return
 
-      const currentRoom = roomRef.current
+      const leftPlayerIds = leftPresences.map((p: any) => p.playerId).filter(Boolean) as string[]
+      
+      for (const leftId of leftPlayerIds) {
+        updatePlayerConnection(leftId, false)
 
-      // Host disconnect during WAITING → transfer host
-      if (currentRoom?.phase === 'WAITING' && currentRoom.hostId === key && key !== myPlayerId) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!session) return
-          supabase.functions.invoke('transfer-host', {
-            body: { roomId, disconnectedHostId: key },
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          })
-        })
-      }
+        const currentRoom = roomRef.current
 
-      // Mid-round disconnect → only host triggers handling
-      if (
-        currentRoom?.phase === 'DISCUSSION' ||
-        currentRoom?.phase === 'POLICE_SELECTION'
-      ) {
-        if (myPlayerId === currentRoom.hostId) {
+        // Host disconnect during WAITING → transfer host
+        if (currentRoom?.phase === 'WAITING' && currentRoom.hostId === leftId && leftId !== myPlayerId) {
           supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) return
-            supabase.functions.invoke('handle-disconnect', {
-              body: { roomId, disconnectedPlayerId: key },
+            supabase.functions.invoke('transfer-host', {
+              body: { roomId, disconnectedHostId: leftId },
               headers: { Authorization: `Bearer ${session.access_token}` },
             })
           })
+        }
+
+        // Mid-round disconnect → only host triggers handling
+        if (
+          currentRoom?.phase === 'DISCUSSION' ||
+          currentRoom?.phase === 'POLICE_SELECTION'
+        ) {
+          if (myPlayerId === currentRoom.hostId) {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+              if (!session) return
+              supabase.functions.invoke('handle-disconnect', {
+                body: { roomId, disconnectedPlayerId: leftId },
+                headers: { Authorization: `Bearer ${session.access_token}` },
+              })
+            })
+          }
         }
       }
     })
@@ -175,7 +307,7 @@ export function useRealtimeRoom({
     channel.on('broadcast', { event: 'GAME_STARTED' }, async (message) => {
       if (!(await verifyBroadcastPhase('DISCUSSION'))) return
       
-      const payload = message.payload as { policeId: string; phase: string; phaseEndsAt?: string }
+      const payload = message.payload as { policeId: string; phase: string; phaseEndsAt?: string; players?: Player[] }
       const currentRoom = useGameStore.getState().room
       if (currentRoom) {
         setRoom({ ...currentRoom, phaseEndsAt: payload.phaseEndsAt })
@@ -183,17 +315,30 @@ export function useRealtimeRoom({
       setPoliceId(payload.policeId)
       setPhase('DISCUSSION')
       clearInteractiveState()
+
+      // Reconcile players from payload (contains the filled bots)
+      if (payload.players) {
+        reconcilePlayersFromPayload(payload.players)
+      } else {
+        reconcileFromDb()
+      }
+
       fetchMyRole()
     })
 
     // ── Broadcast: ACCUSATION_MADE ──
     channel.on('broadcast', { event: 'ACCUSATION_MADE' }, async (message) => {
-      if (!(await verifyBroadcastPhase('ROUND_RESULT'))) return
+      const payload = message.payload as RoundResult & { players?: Player[] }
 
-      const payload = message.payload as RoundResult
+      // Apply scores and phase IMMEDIATELY (no async delay)
       setPhase('ROUND_RESULT')
       setLastResult(payload)
-      if (payload.scores) {
+
+      // Reconcile full player list if server included it
+      if (payload.players && Array.isArray(payload.players) && payload.players.length > 0) {
+        reconcilePlayersFromPayload(payload.players)
+      } else if (payload.scores) {
+        // Fallback: apply scores from the scores map
         setPlayers(
           playersRef.current.map((p) => ({
             ...p,
@@ -201,15 +346,21 @@ export function useRealtimeRoom({
           }))
         )
       }
+
+      // Verify in background (log-only, don't block state updates)
+      verifyBroadcastPhase('ROUND_RESULT').then(valid => {
+        if (!valid) console.warn('[Security] ACCUSATION_MADE phase mismatch detected — reconciling from DB')
+        if (!valid) reconcileFromDb()
+      })
     })
 
     // ── Broadcast: ROUND_STARTED ──
     channel.on('broadcast', { event: 'ROUND_STARTED' }, async (message) => {
-      if (!(await verifyBroadcastPhase('DISCUSSION'))) return
-
       const payload = message.payload as {
-        roundNumber: number; policeId: string; phase: string; phaseEndsAt?: string
+        roundNumber: number; policeId: string; phase: string; phaseEndsAt?: string; players?: Player[]
       }
+
+      // Apply state IMMEDIATELY
       const currentRoom = useGameStore.getState().room
       if (currentRoom) {
         setRoom({ ...currentRoom, phaseEndsAt: payload.phaseEndsAt })
@@ -219,18 +370,43 @@ export function useRealtimeRoom({
       setPhase('DISCUSSION')
       setMyRole(null, null)
       clearInteractiveState()
+
+      // Reconcile full player list if included
+      if (payload.players) {
+        reconcilePlayersFromPayload(payload.players)
+      }
+
       setTimeout(() => { fetchMyRole() }, 500)
+
+      // Verify in background
+      verifyBroadcastPhase('DISCUSSION').then(valid => {
+        if (!valid) {
+          console.warn('[Security] ROUND_STARTED phase mismatch — reconciling from DB')
+          reconcileFromDb()
+        }
+      })
     })
 
     // ── Broadcast: GAME_ENDED ──
     channel.on('broadcast', { event: 'GAME_ENDED' }, async (message) => {
-      if (!(await verifyBroadcastPhase('FINAL_RESULTS'))) return
+      const payload = message.payload as { finalScores: FinalScore[]; players?: Player[] }
 
-      const payload = message.payload as { finalScores: FinalScore[] }
+      // Apply state IMMEDIATELY
       setPhase('FINAL_RESULTS')
       setFinalScores(payload.finalScores)
       clearInteractiveState()
+
+      // Reconcile player list for final scores display
+      if (payload.players) {
+        reconcilePlayersFromPayload(payload.players)
+      }
+
       navigate(`/results?room=${roomCode}`)
+
+      // Verify in background
+      verifyBroadcastPhase('FINAL_RESULTS').then(valid => {
+        if (!valid) console.warn('[Security] GAME_ENDED phase mismatch detected')
+      })
     })
 
     // ── Broadcast: HOST_TRANSFERRED ──
@@ -287,6 +463,7 @@ export function useRealtimeRoom({
 
     // ── Subscribe & track ──
     let retryTimeoutId: ReturnType<typeof setTimeout>;
+    let reconcileIntervalId: ReturnType<typeof setInterval>;
     
     const subscribeToChannel = () => {
       channel.subscribe(async (status, err) => {
@@ -298,8 +475,18 @@ export function useRealtimeRoom({
             username: currentUsername,
             online_at: new Date().toISOString(),
           })
+
+          // Reconcile immediately on (re)connect to catch any missed broadcasts
+          reconcileFromDb()
+
+          // Start periodic reconciliation (every 10 seconds)
+          clearInterval(reconcileIntervalId)
+          reconcileIntervalId = setInterval(() => {
+            reconcileFromDb()
+          }, 10_000)
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           setConnected(false)
+          clearInterval(reconcileIntervalId)
           
           // Auto-reconnect after 3 seconds on transport failure
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -317,6 +504,7 @@ export function useRealtimeRoom({
 
     return () => {
       clearTimeout(retryTimeoutId)
+      clearInterval(reconcileIntervalId)
       setConnected(false)
       channelRef.current = null
       setChannelObj(null)

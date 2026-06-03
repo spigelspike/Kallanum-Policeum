@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   const { data: allRoles, error: rolesErr } = await admin.from("player_roles").select("player_id, role, role_points").eq("room_id", roomId).eq("round_number", room.current_round);
   if (rolesErr || !allRoles || !allRoles.length) return jsonError("Failed to fetch roles", cors, 500);
 
-  const { data: curPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, score, is_connected").eq("room_id", roomId);
+  const { data: curPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected, avatar_key, is_bot").eq("room_id", roomId);
   if (pErr || !curPlayers) return jsonError("Failed to fetch players", cors, 500);
 
   const callerRole = allRoles.find((r) => r.player_id === user.id);
@@ -84,10 +84,21 @@ Deno.serve(async (req) => {
   }
 
   const accusedRole = allRoles.find((r) => r.player_id === accusedPlayerId);
+  const accusedPlayer = curPlayers.find((p) => p.player_id === accusedPlayerId);
   await admin.from("round_results").insert({ room_id: roomId, round_number: room.current_round, police_id: policeRole.player_id, thief_id: thiefRole.player_id, accused_id: accusedPlayerId, correct_guess: correct });
   await admin.from("rooms").update({ phase: "ROUND_RESULT" }).eq("id", roomId);
 
-  await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: "", accusedRole: accusedRole?.role ?? "Unknown", policeId: policeRole.player_id, scores: cumScores });
+  // Include full player list so clients can reconcile their local state
+  const playersList = curPlayers.map((p) => ({
+    id: p.player_id, username: p.username,
+    score: cumScores[p.player_id] ?? p.score,
+    isConnected: p.is_connected,
+    isHost: p.player_id === room.host_id,
+    avatarKey: p.avatar_key ?? null,
+    isBot: p.is_bot ?? false,
+  }));
+
+  await sendBroadcast(admin, roomId, "ACCUSATION_MADE", { roundNumber: room.current_round, correctGuess: correct, thiefId: thiefRole.player_id, accusedId: accusedPlayerId, accusedUsername: accusedPlayer?.username ?? "Unknown", accusedRole: accusedRole?.role ?? "Unknown", policeId: policeRole.player_id, scores: cumScores, players: playersList });
 
   return jsonSuccess({ success: true }, cors);
 });

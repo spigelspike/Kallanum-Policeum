@@ -13,6 +13,7 @@ export interface Player {
   isConnected: boolean
   isHost: boolean
   avatarKey?: string | null
+  isBot?: boolean
 }
 
 export interface Room {
@@ -23,6 +24,7 @@ export interface Room {
   currentRound: number
   totalRounds: number
   phaseEndsAt?: string | null
+  isQuickPlay?: boolean
 }
 
 export interface RoleAssignment {

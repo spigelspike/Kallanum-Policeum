@@ -217,6 +217,7 @@ export default function RoundResult() {
                                   </div>
                                   <span className={`font-serif font-bold text-sm tracking-wider ${isMe ? 'text-[#ffe58f]' : 'text-[#c89f59]'}`}>
                                     {player.username}
+                                    {player.isBot && <span className="ml-0.5 opacity-70" title="Bot">🤖</span>}
                                     {isMe && <span className="text-[#8a6b20] text-[10px] ml-1">{t.game.you}</span>}
                                   </span>
                                 </div>

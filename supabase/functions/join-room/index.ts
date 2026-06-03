@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   if (isExpired(room.expires_at)) return jsonError("This room has expired", cors, 410);
   if (room.phase !== "WAITING") return jsonError("This room has already started.", cors);
 
-  const { data: existingPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected, avatar_key").eq("room_id", room.id);
+  const { data: existingPlayers, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected, avatar_key, is_bot").eq("room_id", room.id);
   if (pErr) return jsonError("Failed to check room players", cors, 500);
   if ((existingPlayers?.length ?? 0) >= room.max_players) return jsonError("Room is full", cors);
   if (existingPlayers?.some((p) => p.player_id === user.id)) return jsonError("You are already in this room", cors);
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
   if (insertErr || !newPlayer) return jsonError(insertErr?.message ?? "Failed to join room", cors, 500);
 
   const allPlayers = [...(existingPlayers ?? []), newPlayer].map((p) => ({
-    id: p.player_id, username: p.username, score: p.score, isConnected: p.is_connected, isHost: p.player_id === room.host_id, avatarKey: p.avatar_key ?? null,
+    id: p.player_id, username: p.username, score: p.score, isConnected: p.is_connected, isHost: p.player_id === room.host_id, avatarKey: p.avatar_key ?? null, isBot: p.is_bot ?? false,
   }));
 
   // Broadcast to existing players

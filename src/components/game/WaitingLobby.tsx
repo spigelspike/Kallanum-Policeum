@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
@@ -25,6 +25,44 @@ export default function WaitingLobby() {
   const isHost = room?.hostId === myPlayerId
   const playerCount = players.length
   const canStart = isHost && playerCount >= 3
+
+  const [countdown, setCountdown] = useState(50)
+
+  async function handleStartWithBots() {
+    playClick()
+    if (!room) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('Not authenticated')
+        return
+      }
+
+      const response = await supabase.functions.invoke('quick-play', {
+        body: { action: 'fill-and-start', roomId: room.id },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+
+      if (response.error) {
+        let msg = response.error.message
+        if ('context' in response.error && typeof (response.error as any).context?.json === 'function') {
+          try {
+            const body = await (response.error as any).context.json()
+            if (body && body.error) {
+              msg = body.error
+            }
+          } catch (_) {}
+        }
+        setError(msg || 'Failed to start quick play')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start quick play')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleStartGame() {
     playClick()
@@ -62,6 +100,23 @@ export default function WaitingLobby() {
       setLoading(false)
     }
   }
+
+  // Timer effect for Quick Play rooms
+  useEffect(() => {
+    if (!room?.isQuickPlay) return
+    if (countdown <= 0) {
+      if (isHost && !loading) {
+        handleStartWithBots()
+      }
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((c) => c - 1)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [room?.isQuickPlay, countdown, isHost, loading])
 
   function handleCopy() {
     playClick()
@@ -253,6 +308,7 @@ export default function WaitingLobby() {
                               <span className={`w-2 h-2 rounded-full ${player.isConnected ? 'bg-[#5ce65c] shadow-[0_0_8px_rgba(92,230,92,0.6)]' : 'bg-[#e65c5c]'}`} />
                               <span className="font-serif font-bold text-[#ffe58f] text-sm sm:text-base tracking-wider drop-shadow-md">
                                 {player.username}
+                                {player.isBot && <span className="ml-1 opacity-70" title="Bot">🤖</span>}
                               </span>
                             </div>
                             
@@ -271,7 +327,24 @@ export default function WaitingLobby() {
 
                     {/* WARNING / STATUS */}
                     <div className="w-full mb-4">
-                      {playerCount < 3 ? (
+                      {room.isQuickPlay ? (
+                        <div className="w-full bg-[#0f2d11]/80 border border-[#2b6a2f]/60 rounded-md py-2.5 flex flex-col justify-center items-center gap-1 shadow-inner px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5ce65c] opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5ce65c]"></span>
+                            </span>
+                            <span className="text-[#aee681] font-serif text-xs sm:text-sm drop-shadow-md text-center">
+                              {countdown > 0 
+                                ? `Matchmaking active. Game starts in ${countdown}s...`
+                                : "Starting game..."}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-white/50 text-center font-sans">
+                            Waiting for other players to join.
+                          </span>
+                        </div>
+                      ) : playerCount < 3 ? (
                         <div className="w-full bg-[#2a0808]/80 border border-[#8a1c1c]/60 rounded-md py-2.5 flex justify-center items-center gap-2 shadow-inner">
                           <svg className="w-4 h-4 text-[#ff6b6b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -292,8 +365,8 @@ export default function WaitingLobby() {
                     {/* START BUTTON (HOST ONLY) */}
                     {isHost && (
                       <button
-                        onClick={handleStartGame}
-                        disabled={!canStart || loading}
+                        onClick={room.isQuickPlay ? handleStartWithBots : handleStartGame}
+                        disabled={loading || (!room.isQuickPlay && !canStart)}
                         className="w-full relative group rounded-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
                       >
                         <div className="absolute -inset-[1px] rounded-lg opacity-60 group-hover:opacity-80 transition-opacity" style={{
@@ -315,7 +388,11 @@ export default function WaitingLobby() {
                             WebkitTextFillColor: 'transparent',
                             filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
                           }}>
-                            {loading ? t.lobby.starting : `${t.lobby.startGame} (${playerCount})`}
+                            {loading 
+                              ? t.lobby.starting 
+                              : room.isQuickPlay 
+                                ? playerCount >= 5 ? t.lobby.startGame : `${t.lobby.startGame} (${playerCount}/5)`
+                                : `${t.lobby.startGame} (${playerCount})`}
                           </span>
 
                           {/* Right Mask Icon */}

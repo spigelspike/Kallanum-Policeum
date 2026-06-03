@@ -283,6 +283,7 @@ export default function GameTableLayout({
                       isMe ? 'text-[#ffe58f]' : 'text-[#c89f59]'
                     }`}>
                       {player.username}
+                      {player.isBot && <span className="ml-0.5 opacity-70" title="Bot">🤖</span>}
                       {isMe && <span className="text-[#8a6b20] ml-0.5">{t.game.you}</span>}
                     </span>
                   </div>

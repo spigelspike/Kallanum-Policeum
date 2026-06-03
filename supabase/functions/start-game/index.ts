@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   if (room.host_id !== user.id) return jsonError("Only the host can start the game", cors, 403);
   if (room.phase !== "WAITING") return jsonError("Game has already started", cors);
 
-  const { data: players, error: pErr } = await admin.from("room_players").select("id, player_id, username").eq("room_id", roomId);
+  const { data: players, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected, avatar_key, is_bot").eq("room_id", roomId);
   if (pErr || !players) return jsonError("Failed to fetch players", cors, 500);
   if (players.length < 3) return jsonError(`Need at least 3 players. Currently: ${players.length}`, cors);
   if (players.length > 15) return jsonError(`Maximum 15 players. Currently: ${players.length}`, cors);
@@ -91,8 +91,8 @@ Deno.serve(async (req) => {
 
   if (!policePlayerId) return jsonError("Critical: no Police assigned", cors, 500);
 
-  // Set phase to DISCUSSION and start the 60-second timer
-  const phaseEndsAt = new Date(Date.now() + 60000).toISOString();
+  // Set phase to DISCUSSION and start the 30-second timer
+  const phaseEndsAt = new Date(Date.now() + 30000).toISOString();
   const { error: updErr } = await admin.from("rooms").update({ 
     phase: "DISCUSSION"
   }).eq("id", roomId);
@@ -101,7 +101,17 @@ Deno.serve(async (req) => {
     return jsonError(`Failed to update room phase: ${updErr.message}`, cors, 500);
   }
 
-  await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt });
+  const policePlayer = players.find(p => p.player_id === policePlayerId);
+  const botPolice = policePlayer?.is_bot ?? false;
 
-  return jsonSuccess({ success: true, policeId: policePlayerId }, cors);
+  const playersList = players.map((p) => ({
+    id: p.player_id, username: p.username, score: p.score ?? 0,
+    isConnected: p.is_connected, isHost: p.player_id === room.host_id,
+    avatarKey: p.avatar_key ?? null,
+    isBot: p.is_bot ?? false,
+  }));
+
+  await sendBroadcast(admin, roomId, "GAME_STARTED", { policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt, botPolice, players: playersList });
+
+  return jsonSuccess({ success: true, policeId: policePlayerId, botPolice, players: playersList }, cors);
 });

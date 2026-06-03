@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   const { data: room, error: rErr } = await admin.from("rooms").select("id, host_id, phase, current_round, total_rounds, expires_at").eq("id", roomId).maybeSingle();
   if (rErr || !room) return jsonError(rErr?.message ?? "Room not found", cors, rErr ? 500 : 404);
   if (isExpired(room.expires_at)) return jsonError("Room has expired", cors, 410);
-  const { data: players, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected").eq("room_id", roomId);
+  const { data: players, error: pErr } = await admin.from("room_players").select("id, player_id, username, score, is_connected, avatar_key, is_bot").eq("room_id", roomId);
   if (pErr || !players) return jsonError("Failed to fetch players", cors, 500);
 
   const hostPlayer = players.find(p => p.player_id === room.host_id);
@@ -70,7 +70,13 @@ Deno.serve(async (req) => {
     await admin.from("rooms").update({ phase: "FINAL_RESULTS" }).eq("id", roomId);
     const sorted = [...players].sort((a, b) => b.score - a.score);
     const finalScores = sorted.map((p, i) => ({ playerId: p.player_id, username: p.username, totalScore: p.score, rank: i + 1 }));
-    await sendBroadcast(admin, roomId, "GAME_ENDED", { finalScores });
+    const playersList = players.map((p) => ({
+      id: p.player_id, username: p.username, score: p.score,
+      isConnected: p.is_connected, isHost: p.player_id === room.host_id,
+      avatarKey: p.avatar_key ?? null,
+      isBot: p.is_bot ?? false,
+    }));
+    await sendBroadcast(admin, roomId, "GAME_ENDED", { finalScores, players: playersList });
     return jsonSuccess({ success: true, isLastRound: true }, cors);
   }
 
@@ -97,14 +103,21 @@ Deno.serve(async (req) => {
   }
   if (!policePlayerId) return jsonError("Critical: no Police assigned", cors, 500);
 
-  const phaseEndsAt = new Date(Date.now() + 60000).toISOString();
+  const phaseEndsAt = new Date(Date.now() + 30000).toISOString();
   await admin.from("rooms").update({ 
     current_round: nextRound, 
     phase: "DISCUSSION",
     phase_ends_at: phaseEndsAt
   }).eq("id", roomId);
 
-  await sendBroadcast(admin, roomId, "ROUND_STARTED", { roundNumber: nextRound, policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt });
+  // Include full player list so clients can reconcile their state at round boundaries
+  const playersList = players.map((p) => ({
+    id: p.player_id, username: p.username, score: p.score,
+    isConnected: p.is_connected, isHost: p.player_id === room.host_id,
+    avatarKey: p.avatar_key ?? null,
+    isBot: p.is_bot ?? false,
+  }));
+  await sendBroadcast(admin, roomId, "ROUND_STARTED", { roundNumber: nextRound, policeId: policePlayerId, phase: "DISCUSSION", phaseEndsAt, players: playersList });
 
   return jsonSuccess({ success: true, isLastRound: false }, cors);
 });
