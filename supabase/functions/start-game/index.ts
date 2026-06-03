@@ -94,7 +94,8 @@ Deno.serve(async (req) => {
   // Set phase to DISCUSSION and start the 30-second timer
   const phaseEndsAt = new Date(Date.now() + 30000).toISOString();
   const { error: updErr } = await admin.from("rooms").update({ 
-    phase: "DISCUSSION"
+    phase: "DISCUSSION",
+    phase_ends_at: phaseEndsAt
   }).eq("id", roomId);
   
   if (updErr) {
