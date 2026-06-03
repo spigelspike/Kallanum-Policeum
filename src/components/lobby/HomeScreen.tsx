@@ -33,9 +33,15 @@ export default function HomeScreen() {
   // Sign in anonymously if profile is set but we don't have a player ID
   useEffect(() => {
     if (hasProfile && !myPlayerId) {
-      supabase.auth.signInAnonymously().then(({ data, error }) => {
-        if (!error && data?.user) {
-          setMyPlayerId(data.user.id)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && session.user) {
+          setMyPlayerId(session.user.id)
+        } else {
+          supabase.auth.signInAnonymously().then(({ data, error }) => {
+            if (!error && data?.user) {
+              setMyPlayerId(data.user.id)
+            }
+          })
         }
       })
     }
