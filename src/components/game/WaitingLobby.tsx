@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../stores/gameStore'
 import { useProfileStore } from '../../stores/profileStore'
@@ -27,6 +27,7 @@ export default function WaitingLobby() {
   const canStart = isHost && playerCount >= 3
 
   const [countdown, setCountdown] = useState(50)
+  const hasAttemptedStart = useRef(false)
 
   async function handleStartWithBots() {
     playClick()
@@ -55,7 +56,9 @@ export default function WaitingLobby() {
             }
           } catch (_) {}
         }
-        setError(msg || 'Failed to start quick play')
+        if (msg !== "Game has already started") {
+          setError(msg || 'Failed to start quick play')
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start quick play')
@@ -105,7 +108,8 @@ export default function WaitingLobby() {
   useEffect(() => {
     if (!room?.isQuickPlay) return
     if (countdown <= 0) {
-      if (isHost && !loading) {
+      if (!hasAttemptedStart.current) {
+        hasAttemptedStart.current = true
         handleStartWithBots()
       }
       return
@@ -116,7 +120,7 @@ export default function WaitingLobby() {
     }, 1000)
 
     return () => clearTimeout(timer)
-  }, [room?.isQuickPlay, countdown, isHost, loading])
+  }, [room?.isQuickPlay, countdown])
 
   function handleCopy() {
     playClick()

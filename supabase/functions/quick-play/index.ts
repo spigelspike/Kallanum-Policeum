@@ -184,7 +184,6 @@ Deno.serve(async (req) => {
 
     if (roomErr || !room) return jsonError(roomErr?.message ?? "Room not found", cors, roomErr ? 500 : 404);
     if (room.phase !== "WAITING") return jsonError("Game has already started", cors);
-    if (room.host_id !== user.id) return jsonError("Only the host can start the game", cors, 403);
 
     // Fetch existing real players in the room
     const { data: players, error: pErr } = await admin
