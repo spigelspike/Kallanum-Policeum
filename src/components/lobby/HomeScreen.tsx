@@ -224,7 +224,7 @@ export default function HomeScreen() {
                 <MainButton
                   onClick={handleQuickPlay}
                   title="Quick Play"
-                  subtitle="Instant game with bots"
+                  subtitle="Instant matchmaking"
                   gradientOuter="from-[#059669] to-[#064e3b]"
                   gradientInner="from-[#047857] to-[#065f46]"
                   shadow="shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
