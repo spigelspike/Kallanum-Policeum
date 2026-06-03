@@ -72,7 +72,13 @@ export default function BuyMeChaiModal({ isOpen, onClose }: BuyMeChaiModalProps)
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 border-2 border-[#d4af37] shadow-[0_0_20px_rgba(212,175,55,0.3)] z-10" style={{
                   background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
                 }}>
-                  <span className="text-3xl text-white drop-shadow-md">☕</span>
+                  <svg className="w-8 h-8 text-white drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                    <line x1="6" y1="2" x2="6" y2="4" />
+                    <line x1="10" y1="2" x2="10" y2="4" />
+                    <line x1="14" y1="2" x2="14" y2="4" />
+                  </svg>
                 </div>
                 
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-center mb-2 z-10" style={{

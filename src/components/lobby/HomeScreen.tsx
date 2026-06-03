@@ -132,13 +132,19 @@ export default function HomeScreen() {
         <LanguageToggle />
 
         {/* Absolute Chai Button */}
-        <div className="absolute top-4 right-16 sm:right-20 z-50">
+        <div className="absolute top-4 right-[4.5rem] z-50">
           <button 
             onClick={() => { playClick(); setShowChaiModal(true) }}
-            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/50 backdrop-blur-md border border-amber-400/30 hover:bg-amber-900/30 hover:border-amber-400/60 transition-all text-amber-200 hover:text-amber-100 shadow-[0_0_15px_rgba(212,175,55,0.15)] group animate-pulse"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-[#c89f59]/50 hover:bg-black/70 transition-all text-[#c89f59] hover:text-[#ffe58f] shadow-[0_0_10px_rgba(200,159,89,0.2)] group"
+            title="Buy the Developer a Chai"
           >
-            <span className="text-sm sm:text-base group-hover:scale-110 transition-transform">☕</span>
-            <span className="hidden sm:inline font-serif text-xs font-bold tracking-wider">Buy a Chai</span>
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+              <line x1="6" y1="2" x2="6" y2="4" />
+              <line x1="10" y1="2" x2="10" y2="4" />
+              <line x1="14" y1="2" x2="14" y2="4" />
+            </svg>
           </button>
         </div>
 
