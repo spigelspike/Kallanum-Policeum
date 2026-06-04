@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../stores/gameStore'
 import { avatarKeyToUrl } from '../../utils/avatarMap'
 import { useProfileStore } from '../../stores/profileStore'
@@ -18,12 +18,15 @@ export default function RoundResult() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState(5)
+  const autoAdvanceTriggered = useRef(false)
 
   const isHost = room?.hostId === myPlayerId
   const hostPlayer = players.find(p => p.id === room?.hostId)
   const isHostDisconnected = hostPlayer && !hostPlayer.isConnected
   const canAdvance = isHost || isHostDisconnected
   const isFinalRound = room ? room.currentRound >= room.totalRounds : false
+  const isQuickPlay = room?.isQuickPlay ?? false
 
   async function handleNextRound() {
     if (!room) return
@@ -74,7 +77,28 @@ export default function RoundResult() {
     } else {
       playLose()
     }
+    // Reset auto-advance state for new results
+    autoAdvanceTriggered.current = false
+    setAutoAdvanceCountdown(5)
   }, [lastResult])
+
+  // Auto-advance for quick play rooms
+  useEffect(() => {
+    if (!isQuickPlay || !lastResult) return
+    if (autoAdvanceCountdown <= 0) {
+      if (!autoAdvanceTriggered.current) {
+        autoAdvanceTriggered.current = true
+        if (isFinalRound) {
+          handleEndGame()
+        } else {
+          handleNextRound()
+        }
+      }
+      return
+    }
+    const timer = setTimeout(() => setAutoAdvanceCountdown(c => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [isQuickPlay, lastResult, autoAdvanceCountdown, isFinalRound])
 
   if (!room || !lastResult) return null
 
@@ -234,8 +258,35 @@ export default function RoundResult() {
                         })}
                       </div>
 
-                      {/* Host Actions (or fallback if host disconnects) */}
-                      {canAdvance && (
+                      {/* Quick Play: auto-advance countdown */}
+                      {isQuickPlay && (
+                        <div className="mt-3">
+                          <div className="w-full rounded-lg py-3 flex flex-col items-center gap-2" style={{
+                            background: 'linear-gradient(180deg, rgba(13,7,4,0.9), rgba(26,15,8,0.85))',
+                            border: '1px solid rgba(90,66,41,0.4)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                          }}>
+                            <span className="font-serif text-[11px] uppercase tracking-[0.2em] text-[#8a6b20]">
+                              {isFinalRound ? t.game.seeFinalResults : t.game.nextRound}
+                            </span>
+                            {/* Progress bar */}
+                            <div className="w-4/5 h-1.5 rounded-full overflow-hidden" style={{
+                              background: 'rgba(90,62,21,0.3)',
+                            }}>
+                              <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{
+                                width: `${(autoAdvanceCountdown / 5) * 100}%`,
+                                background: 'linear-gradient(90deg, #7a5a18, #d4af37)',
+                              }} />
+                            </div>
+                            <span className="font-serif text-[10px] text-[#c89f59] italic">
+                              {loading ? t.game.loading : `${autoAdvanceCountdown}s`}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Host Actions (non-quick-play only) */}
+                      {!isQuickPlay && canAdvance && (
                         <div className="mt-2">
                           {isFinalRound ? (
                             <button
@@ -285,7 +336,7 @@ export default function RoundResult() {
                         </div>
                       )}
 
-                      {!canAdvance && (
+                      {!isQuickPlay && !canAdvance && (
                         <div className="w-full text-center py-2 mt-2">
                           <span className="text-[#c89f59] font-serif text-xs italic tracking-wide">
                             {t.game.waitingForHostToContinue}

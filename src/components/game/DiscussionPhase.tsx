@@ -326,19 +326,80 @@ export default function DiscussionPhase() {
     <>
       <TutorialOverlay />
 
-      {/* 5-second Grace Period overlay (pointer-events-none so player selections are still clickable) */}
+      {/* Grace Period overlay — matches game's royal/gold aesthetic */}
       {discussionEnded && graceTimeLeft > 0 && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/40 pointer-events-none animate-in fade-in duration-300">
-          <div className="text-center p-6 max-w-sm rounded-xl border border-red-500/20 bg-gradient-to-b from-red-950/70 to-black/90 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse">
-            <span className="block font-serif font-black text-3xl sm:text-4xl uppercase tracking-widest text-red-500 mb-2 drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] animate-bounce">
-              {isPolice ? "ACCUSE NOW!" : "POLICE DECIDING..."}
-            </span>
-            <span className="block font-serif font-black text-7xl sm:text-8xl text-yellow-500 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)] animate-pulse">
-              {graceTimeLeft}
-            </span>
-            <span className="block text-xs text-white/80 font-bold tracking-wider uppercase mt-3 drop-shadow-md">
-              {isPolice ? "TAP A PLAYER ON THE TABLE!" : "The Police is making their final guess!"}
-            </span>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none" style={{
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
+        }}>
+          <div className="text-center max-w-[320px] w-[85vw]">
+            {/* Outer ornate border */}
+            <div className="rounded-2xl p-[2px]" style={{
+              background: 'linear-gradient(160deg, #d4af37 0%, #5a3e15 30%, #d4af37 60%, #5a3e15 100%)',
+            }}>
+              <div className="rounded-[14px] relative overflow-hidden" style={{
+                background: 'linear-gradient(180deg, #2c1a0e 0%, #1a0f08 40%, #0d0704 100%)',
+              }}>
+                {/* Inner glow */}
+                <div className="absolute inset-0 pointer-events-none" style={{
+                  background: isPolice
+                    ? 'radial-gradient(ellipse at 50% 30%, rgba(212,175,55,0.15) 0%, transparent 60%)'
+                    : 'radial-gradient(ellipse at 50% 30%, rgba(59,130,246,0.1) 0%, transparent 60%)',
+                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
+                }} />
+
+                <div className="relative z-10 px-6 pt-6 pb-5 flex flex-col items-center gap-3">
+                  {/* Hourglass icon */}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-60">
+                    <path d="M6 2v6l4 4-4 4v6h12v-6l-4-4 4-4V2H6zm10 2v4.17l-4 4-4-4V4h8zm-8 16v-4.17l4-4 4 4V20H8z" fill={isPolice ? '#d4af37' : '#60a5fa'} />
+                  </svg>
+
+                  {/* Label */}
+                  <span className="font-serif font-bold text-sm sm:text-base uppercase tracking-[0.2em]" style={{
+                    color: isPolice ? '#ffe58f' : '#93c5fd',
+                  }}>
+                    {isPolice ? t.game.selectThief || 'ACCUSE NOW' : t.game.policeIsChoosing || 'POLICE DECIDING'}
+                  </span>
+
+                  {/* Countdown number */}
+                  <div className="relative">
+                    <span className="font-serif font-black text-6xl sm:text-7xl tabular-nums" style={{
+                      background: isPolice
+                        ? 'linear-gradient(180deg, #fff8e1, #d4af37, #8a6b20)'
+                        : 'linear-gradient(180deg, #dbeafe, #60a5fa, #2563eb)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))',
+                    }}>
+                      {graceTimeLeft}
+                    </span>
+                  </div>
+
+                  {/* Progress pips */}
+                  <div className="flex gap-2">
+                    {[5, 4, 3, 2, 1].map(n => (
+                      <div key={n} className="w-2 h-2 rounded-full transition-all duration-300" style={{
+                        background: n <= graceTimeLeft
+                          ? (isPolice ? '#d4af37' : '#60a5fa')
+                          : 'rgba(90,66,41,0.25)',
+                        boxShadow: n <= graceTimeLeft
+                          ? (isPolice ? '0 0 6px rgba(212,175,55,0.6)' : '0 0 6px rgba(96,165,250,0.6)')
+                          : 'none',
+                      }} />
+                    ))}
+                  </div>
+
+                  {/* Subtitle */}
+                  <span className="font-serif text-[10px] sm:text-[11px] tracking-wider" style={{
+                    color: isPolice ? '#c89f59' : '#93c5fd',
+                    opacity: 0.7,
+                  }}>
+                    {isPolice
+                      ? (t.game.tapAPlayer || 'Tap a player on the table')
+                      : (t.game.waitingForPolice || 'The Police is making their final guess')}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
