@@ -8,6 +8,7 @@ import RoleReveal from './RoleReveal'
 import DiscussionPhase from './DiscussionPhase'
 import RoundResult from './RoundResult'
 import AgoraVoiceManager from './AgoraVoiceManager'
+import AccusationCinematic from './AccusationCinematic'
 import VoiceControls from './VoiceControls'
 
 export default function GameRoom() {
@@ -72,6 +73,8 @@ export default function GameRoom() {
       )}
 
       {phase === 'POLICE_SELECTION' && <DiscussionPhase />}
+
+      {phase === 'ACCUSATION_CINEMATIC' && <AccusationCinematic />}
 
       {phase === 'ROUND_RESULT' && <RoundResult />}
 

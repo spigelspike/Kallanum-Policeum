@@ -236,66 +236,34 @@ export default function ResultsPage() {
       </div>
 
       {/* --- PODIUM --- */}
-      <div className="relative z-20 flex-1 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-center gap-8 md:gap-4 lg:gap-8 px-4 pt-40 md:pt-32 pb-48">
+      <div className="relative z-20 flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center md:flex-row md:items-end gap-6 md:gap-4 lg:gap-8 px-2 md:px-4 pt-32 md:pt-32 pb-44 md:pb-48">
         
-        {/* 2nd Place */}
-        {secondPlace && (
-          <div className="order-2 md:order-1 relative w-[220px] md:w-[240px] md:mb-6 animate-[fadeInUp_0.8s_ease-out]">
-            {/* Rank Badge */}
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e2e8f0]" style={{
-              background: 'linear-gradient(180deg, #94a3b8, #475569)',
-              boxShadow: '0 0 15px rgba(148, 163, 184, 0.4), inset 0 2px 4px rgba(255,255,255,0.4)'
-            }}>
-              <span className="text-2xl font-black text-white drop-shadow-md">2</span>
-            </div>
-            
-            {/* Card Body */}
-            <div className="pt-10 pb-8 px-6 rounded-lg bg-[#0f1115]/90 backdrop-blur-md border border-[#64748b] flex flex-col items-center" style={{
-              boxShadow: '0 10px 30px -10px rgba(148, 163, 184, 0.2), inset 0 0 40px rgba(0,0,0,0.8)'
-            }}>
-              <div className="w-20 h-20 rounded-full border-2 border-[#94a3b8] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(148,163,184,0.3)]">
-                {avatarKeyToUrl((secondPlace as any).avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : null) ? (
-                  <img src={avatarKeyToUrl((secondPlace as any).avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{secondPlace.username}</h3>
-              <p className="text-[#3b82f6] font-mono font-bold">{secondPlace.totalScore} PTS</p>
-            </div>
-          </div>
-        )}
-
-        {/* 1st Place */}
+        {/* 1st Place (Mobile: Top, Desktop: Middle) */}
         {firstPlace && (
-          <div className="order-1 md:order-2 relative w-[260px] md:w-[300px] z-30 animate-[fadeInUp_0.6s_ease-out]">
+          <div className="order-1 md:order-2 relative w-[240px] md:w-[300px] z-30 animate-[fadeInUp_0.6s_ease-out] mb-2 md:mb-0">
             {/* Rank Badge */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full z-10 flex items-center justify-center border-2 border-[#ffe58f]" style={{
+            <div className="absolute -top-6 md:-top-8 left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full z-10 flex items-center justify-center border-2 border-[#ffe58f]" style={{
               background: 'linear-gradient(180deg, #d4af37, #8a6b20)',
               boxShadow: '0 0 30px rgba(212, 175, 55, 0.6), inset 0 2px 4px rgba(255,255,255,0.4)'
             }}>
-              <span className="text-3xl font-black text-[#fff8e1] drop-shadow-md">1</span>
+              <span className="text-2xl md:text-3xl font-black text-[#fff8e1] drop-shadow-md">1</span>
             </div>
             
             {/* Card Body */}
-            <div className="pt-12 pb-10 px-6 rounded-lg bg-[#141005]/95 backdrop-blur-md border border-[#d4af37] flex flex-col items-center" style={{
+            <div className="pt-10 pb-8 px-4 md:pt-12 md:pb-10 md:px-6 rounded-lg bg-[#141005]/95 backdrop-blur-md border border-[#d4af37] flex flex-col items-center" style={{
               boxShadow: '0 15px 40px -10px rgba(212, 175, 55, 0.4), inset 0 0 50px rgba(0,0,0,0.9), 0 0 10px rgba(212, 175, 55, 0.3)'
             }}>
-              {/* Laurel Wreath decorative SVG (simulated with CSS for now or skipped) */}
-              <div className="relative w-28 h-28 mb-5">
+              {/* Laurel Wreath decorative SVG */}
+              <div className="relative w-20 h-20 md:w-28 md:h-28 mb-4 md:mb-5">
                 {/* Glow behind avatar */}
                 <div className="absolute inset-0 bg-[#d4af37] opacity-20 blur-xl rounded-full" />
                 
                 <div className="absolute inset-1 rounded-full border-[3px] border-[#d4af37] overflow-hidden bg-black shadow-[0_0_20px_rgba(212,175,55,0.6)] z-10">
-                  {avatarKeyToUrl((firstPlace as any).avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : null) ? (
-                    <img src={avatarKeyToUrl((firstPlace as any).avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                  {avatarKeyToUrl(firstPlace.avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                    <img src={avatarKeyToUrl(firstPlace.avatarKey) || (firstPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <svg className="w-10 h-10 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                       </svg>
                     </div>
@@ -303,46 +271,81 @@ export default function ResultsPage() {
                 </div>
               </div>
               
-              <h3 className="text-2xl font-black text-[#d4af37] uppercase tracking-widest mb-1 text-center w-full truncate drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+              <h3 className="text-xl md:text-2xl font-black text-[#d4af37] uppercase tracking-widest mb-1 text-center w-full truncate drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                 {firstPlace.username}
               </h3>
-              <p className="text-[#ffe58f] font-mono font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstPlace.totalScore} PTS</p>
+              <p className="text-[#ffe58f] font-mono font-bold text-base md:text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstPlace.totalScore} PTS</p>
             </div>
           </div>
         )}
 
-        {/* 3rd Place */}
-        {thirdPlace && (
-          <div className="order-3 md:order-3 relative w-[220px] md:w-[240px] md:mb-12 animate-[fadeInUp_1s_ease-out]">
-            {/* Rank Badge */}
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e6a15c]" style={{
-              background: 'linear-gradient(180deg, #b87333, #733c16)',
-              boxShadow: '0 0 15px rgba(184, 115, 51, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'
-            }}>
-              <span className="text-2xl font-black text-white drop-shadow-md">3</span>
-            </div>
-            
-            {/* Card Body */}
-            <div className="pt-10 pb-8 px-6 rounded-lg bg-[#150d05]/90 backdrop-blur-md border border-[#8b4513] flex flex-col items-center" style={{
-              boxShadow: '0 10px 30px -10px rgba(139, 69, 19, 0.3), inset 0 0 40px rgba(0,0,0,0.8)'
-            }}>
-              <div className="w-20 h-20 rounded-full border-2 border-[#b87333] overflow-hidden bg-black mb-4 shadow-[0_0_15px_rgba(184,115,51,0.3)]">
-                {avatarKeyToUrl((thirdPlace as any).avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : null) ? (
-                  <img src={avatarKeyToUrl((thirdPlace as any).avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                )}
+        {/* Mobile: 2nd and 3rd are side by side */}
+        <div className="order-2 md:contents flex flex-row items-end justify-center gap-3 md:gap-0 w-full px-2">
+          
+          {/* 2nd Place */}
+          {secondPlace && (
+            <div className="md:order-1 relative w-[140px] sm:w-[160px] md:w-[240px] md:mb-6 animate-[fadeInUp_0.8s_ease-out]">
+              {/* Rank Badge */}
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e2e8f0]" style={{
+                background: 'linear-gradient(180deg, #94a3b8, #475569)',
+                boxShadow: '0 0 15px rgba(148, 163, 184, 0.4), inset 0 2px 4px rgba(255,255,255,0.4)'
+              }}>
+                <span className="text-xl md:text-2xl font-black text-white drop-shadow-md">2</span>
               </div>
-              <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1 text-center w-full truncate">{thirdPlace.username}</h3>
-              <p className="text-[#d97706] font-mono font-bold">{thirdPlace.totalScore} PTS</p>
+              
+              {/* Card Body */}
+              <div className="pt-8 pb-6 px-2 md:pt-10 md:pb-8 md:px-6 rounded-lg bg-[#0f1115]/90 backdrop-blur-md border border-[#64748b] flex flex-col items-center" style={{
+                boxShadow: '0 10px 30px -10px rgba(148, 163, 184, 0.2), inset 0 0 40px rgba(0,0,0,0.8)'
+              }}>
+                <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-[#94a3b8] overflow-hidden bg-black mb-3 md:mb-4 shadow-[0_0_15px_rgba(148,163,184,0.3)]">
+                  {avatarKeyToUrl(secondPlace.avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                    <img src={avatarKeyToUrl(secondPlace.avatarKey) || (secondPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg className="w-6 h-6 md:w-8 md:h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-xs sm:text-sm md:text-lg font-black text-white uppercase tracking-wider mb-0.5 text-center w-full truncate">{secondPlace.username}</h3>
+                <p className="text-[#3b82f6] font-mono font-bold text-[10px] md:text-base">{secondPlace.totalScore} PTS</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
+          {/* 3rd Place */}
+          {thirdPlace && (
+            <div className="md:order-3 relative w-[140px] sm:w-[160px] md:w-[240px] md:mb-12 animate-[fadeInUp_1s_ease-out]">
+              {/* Rank Badge */}
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full z-10 flex items-center justify-center border-2 border-[#e6a15c]" style={{
+                background: 'linear-gradient(180deg, #b87333, #733c16)',
+                boxShadow: '0 0 15px rgba(184, 115, 51, 0.4), inset 0 2px 4px rgba(255,255,255,0.3)'
+              }}>
+                <span className="text-xl md:text-2xl font-black text-white drop-shadow-md">3</span>
+              </div>
+              
+              {/* Card Body */}
+              <div className="pt-8 pb-6 px-2 md:pt-10 md:pb-8 md:px-6 rounded-lg bg-[#150d05]/90 backdrop-blur-md border border-[#8b4513] flex flex-col items-center" style={{
+                boxShadow: '0 10px 30px -10px rgba(139, 69, 19, 0.3), inset 0 0 40px rgba(0,0,0,0.8)'
+              }}>
+                <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-[#b87333] overflow-hidden bg-black mb-3 md:mb-4 shadow-[0_0_15px_rgba(184,115,51,0.3)]">
+                  {avatarKeyToUrl(thirdPlace.avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : null) ? (
+                    <img src={avatarKeyToUrl(thirdPlace.avatarKey) || (thirdPlace.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg className="w-6 h-6 md:w-8 md:h-8 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-xs sm:text-sm md:text-lg font-black text-white uppercase tracking-wider mb-0.5 text-center w-full truncate">{thirdPlace.username}</h3>
+                <p className="text-[#d97706] font-mono font-bold text-[10px] md:text-base">{thirdPlace.totalScore} PTS</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* --- BOTTOM NAVIGATION BAR --- */}
@@ -387,8 +390,8 @@ export default function ResultsPage() {
                   <div className="flex items-center gap-3">
                     <span className="w-6 text-center text-sm font-black text-[#8a6b20]">#{player.rank}</span>
                     <div className="w-8 h-8 rounded-full border border-[#d4af37]/50 overflow-hidden">
-                      {avatarKeyToUrl((player as any).avatarKey) || (player.playerId === myPlayerId ? myAvatar : null) ? (
-                        <img src={avatarKeyToUrl((player as any).avatarKey) || (player.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
+                      {avatarKeyToUrl(player.avatarKey) || (player.playerId === myPlayerId ? myAvatar : null) ? (
+                        <img src={avatarKeyToUrl(player.avatarKey) || (player.playerId === myPlayerId ? myAvatar : undefined) || ''} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <svg className="w-4 h-4 text-[#c89f59] opacity-50" viewBox="0 0 24 24" fill="currentColor">

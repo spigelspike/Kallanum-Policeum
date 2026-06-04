@@ -3,6 +3,7 @@ export type GamePhase =
   | 'ROLE_ASSIGNMENT'
   | 'DISCUSSION'
   | 'POLICE_SELECTION'
+  | 'ACCUSATION_CINEMATIC'
   | 'ROUND_RESULT'
   | 'FINAL_RESULTS'
 
@@ -49,4 +50,6 @@ export interface FinalScore {
   username: string
   totalScore: number
   rank: number
+  avatarKey?: string | null
+  isBot?: boolean
 }

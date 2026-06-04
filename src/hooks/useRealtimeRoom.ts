@@ -126,9 +126,16 @@ export function useRealtimeRoom({
       if (playersErr || !dbPlayers) return
 
       // 4. Apply all updates
+      // Don't let DB reconciliation interrupt the accusation cinematic
+      const localPhase = currentRoom.phase
+      const dbPhase = dbRoom.phase as any
+      const effectivePhase = (localPhase === 'ACCUSATION_CINEMATIC' && dbPhase === 'ROUND_RESULT')
+        ? 'ACCUSATION_CINEMATIC'
+        : dbPhase
+
       setRoom({
         ...currentRoom,
-        phase: dbRoom.phase as any,
+        phase: effectivePhase,
         currentRound: dbRoom.current_round,
         totalRounds: dbRoom.total_rounds,
         hostId: dbRoom.host_id,
@@ -330,8 +337,8 @@ export function useRealtimeRoom({
     channel.on('broadcast', { event: 'ACCUSATION_MADE' }, async (message) => {
       const payload = message.payload as RoundResult & { players?: Player[] }
 
-      // Apply scores and phase IMMEDIATELY (no async delay)
-      setPhase('ROUND_RESULT')
+      // Apply scores and show cinematic before result
+      setPhase('ACCUSATION_CINEMATIC')
       setLastResult(payload)
 
       // Reconcile full player list if server included it

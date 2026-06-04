@@ -260,27 +260,18 @@ export default function RoundResult() {
 
                       {/* Quick Play: auto-advance countdown */}
                       {isQuickPlay && (
-                        <div className="mt-3">
-                          <div className="w-full rounded-lg py-3 flex flex-col items-center gap-2" style={{
-                            background: 'linear-gradient(180deg, rgba(13,7,4,0.9), rgba(26,15,8,0.85))',
-                            border: '1px solid rgba(90,66,41,0.4)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                          }}>
-                            <span className="font-serif text-[11px] uppercase tracking-[0.2em] text-[#8a6b20]">
-                              {isFinalRound ? t.game.seeFinalResults : t.game.nextRound}
+                        <div className="mt-4 mb-2">
+                          <div className="w-full flex items-center justify-center gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+                            <span className="font-serif text-[11px] sm:text-xs uppercase tracking-[0.2em] text-[#d4af37] drop-shadow-md">
+                              {loading 
+                                ? t.game.loading 
+                                : isFinalRound 
+                                  ? `${t.game.seeFinalResults} IN ${autoAdvanceCountdown}`
+                                  : `${t.game.nextRound} IN ${autoAdvanceCountdown}`
+                              }
                             </span>
-                            {/* Progress bar */}
-                            <div className="w-4/5 h-1.5 rounded-full overflow-hidden" style={{
-                              background: 'rgba(90,62,21,0.3)',
-                            }}>
-                              <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{
-                                width: `${(autoAdvanceCountdown / 5) * 100}%`,
-                                background: 'linear-gradient(90deg, #7a5a18, #d4af37)',
-                              }} />
-                            </div>
-                            <span className="font-serif text-[10px] text-[#c89f59] italic">
-                              {loading ? t.game.loading : `${autoAdvanceCountdown}s`}
-                            </span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', animationDelay: '0.75s' }} />
                           </div>
                         </div>
                       )}
