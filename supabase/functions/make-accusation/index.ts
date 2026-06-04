@@ -53,10 +53,11 @@ Deno.serve(async (req) => {
   // Add 15000ms grace period for clock skew between client and server
   const isTimeout = room.phase_ends_at ? new Date(room.phase_ends_at).getTime() <= Date.now() + 15000 : false;
   const isPoliceOffline = policePlayer && !policePlayer.is_connected;
+  const isPoliceBot = policePlayer && policePlayer.is_bot;
 
   if (!callerRole) return jsonError("Caller not found", cors, 403);
-  if (callerRole.role !== "Police" && !isTimeout && !isPoliceOffline) {
-    return jsonError("Only Police can accuse (unless timeout or Police is offline)", cors, 403);
+  if (callerRole.role !== "Police" && !isTimeout && !isPoliceOffline && !isPoliceBot) {
+    return jsonError("Only Police can accuse (unless timeout, Police is offline, or Police is a bot)", cors, 403);
   }
   if (!policeRole) return jsonError("No Police found", cors, 500);
 

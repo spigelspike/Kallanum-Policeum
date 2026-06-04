@@ -24,7 +24,12 @@ export default function RoundResult() {
   const isHost = room?.hostId === myPlayerId
   const hostPlayer = players.find(p => p.id === room?.hostId)
   const isHostDisconnected = hostPlayer && !hostPlayer.isConnected
-  const canAdvance = isHost || isHostDisconnected
+  
+  // Deterministic fallback host so only one client triggers auto-advance or sees the button if host drops
+  const connectedRealPlayers = players.filter(p => p.isConnected && !p.isBot).sort((a, b) => a.id.localeCompare(b.id))
+  const fallbackHostId = connectedRealPlayers.length > 0 ? connectedRealPlayers[0].id : null
+  const isFallbackHost = isHostDisconnected && myPlayerId === fallbackHostId
+  const canAdvance = isHost || isFallbackHost
   const isFinalRound = room ? room.currentRound >= room.totalRounds : false
   const isQuickPlay = room?.isQuickPlay ?? false
 
@@ -88,17 +93,19 @@ export default function RoundResult() {
     if (autoAdvanceCountdown <= 0) {
       if (!autoAdvanceTriggered.current) {
         autoAdvanceTriggered.current = true
-        if (isFinalRound) {
-          handleEndGame()
-        } else {
-          handleNextRound()
+        if (canAdvance) {
+          if (isFinalRound) {
+            handleEndGame()
+          } else {
+            handleNextRound()
+          }
         }
       }
       return
     }
     const timer = setTimeout(() => setAutoAdvanceCountdown(c => c - 1), 1000)
     return () => clearTimeout(timer)
-  }, [isQuickPlay, lastResult, autoAdvanceCountdown, isFinalRound])
+  }, [isQuickPlay, lastResult, autoAdvanceCountdown, isFinalRound, canAdvance])
 
   if (!room || !lastResult) return null
 
