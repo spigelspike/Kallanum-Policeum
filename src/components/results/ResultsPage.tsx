@@ -24,8 +24,12 @@ export default function ResultsPage() {
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const { t } = useLanguageStore()
   
-  const { joinRoom } = useRoom()
+  const { joinRoom, quickPlay } = useRoom()
   const { name, avatar: myAvatar } = useProfileStore()
+
+  // Capture isQuickPlay from room data before it gets reset
+  const room = useGameStore((s) => s.room)
+  const [isQuickPlay] = useState(() => room?.isQuickPlay ?? false)
 
   const [localScores, setLocalScores] = useState<FinalScore[]>([])
   const [loading, setLoading] = useState(false)
@@ -101,43 +105,51 @@ export default function ResultsPage() {
 
   async function handlePlayAgain() {
     playClick()
-    
     setResetting(true)
     setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session || !roomCode) return
-      
-      const { data: roomData } = await supabase
-        .from('rooms')
-        .select('id, host_id')
-        .eq('code', roomCode.toUpperCase())
-        .maybeSingle()
-        
-      if (roomData) {
-        // If host, attempt to reset the game first
-        if (roomData.host_id === myPlayerId) {
-          const response = await supabase.functions.invoke('reset-game', {
-            body: { roomId: roomData.id },
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          })
-          if (response.error) {
-             console.error("Reset failed:", response.error)
-          }
-        }
-        
-        // Wait a small bit for DB to propagate the phase change to WAITING
-        await new Promise(r => setTimeout(r, 500))
-        
-        // Attempt to rejoin the room
-        const joinedCode = await joinRoom(name.trim(), roomCode)
-        if (joinedCode) {
-          resetStore()
-          navigate(`/room/${joinedCode}`)
+      if (isQuickPlay) {
+        // Quick play: queue into a fresh match
+        resetStore()
+        const code = await quickPlay()
+        if (code) {
+          navigate(`/room/${code}`)
           return
         } else {
-           // joinRoom returns null on error. useRoom stores error, but we can set a local one
-           setError(roomData.host_id === myPlayerId ? "Failed to restart game." : "Waiting for host to play again...")
+          setError('Failed to find a match. Try again.')
+        }
+      } else {
+        // Private room: try to reset and rejoin
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session || !roomCode) return
+        
+        const { data: roomData } = await supabase
+          .from('rooms')
+          .select('id, host_id')
+          .eq('code', roomCode.toUpperCase())
+          .maybeSingle()
+          
+        if (roomData) {
+          if (roomData.host_id === myPlayerId) {
+            const response = await supabase.functions.invoke('reset-game', {
+              body: { roomId: roomData.id },
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            })
+            if (response.error) {
+               console.error("Reset failed:", response.error)
+            }
+          }
+          
+          await new Promise(r => setTimeout(r, 500))
+          
+          const joinedCode = await joinRoom(name.trim(), roomCode)
+          if (joinedCode) {
+            resetStore()
+            navigate(`/room/${joinedCode}`)
+            return
+          } else {
+             setError(roomData.host_id === myPlayerId ? "Failed to restart game." : "Waiting for host to play again...")
+          }
         }
       }
     } catch (e) {
@@ -337,23 +349,23 @@ export default function ResultsPage() {
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 flex justify-center items-end z-50 pointer-events-none">
         
         {/* Center: Main Actions */}
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <button onClick={handlePlayAgain} disabled={resetting} className="pointer-events-auto flex items-center justify-center gap-3 w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group disabled:opacity-50">
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full max-w-md md:max-w-none md:w-auto px-4 md:px-0">
+          <button onClick={handlePlayAgain} disabled={resetting} className="pointer-events-auto flex items-center justify-center gap-3 w-full md:w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group disabled:opacity-50">
             <RefreshCw size={16} className={`text-slate-400 transition-transform duration-500 ${resetting ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">{resetting ? 'LOADING...' : 'PLAY AGAIN'}</span>
+            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">{resetting ? 'LOADING...' : isQuickPlay ? 'QUICK PLAY AGAIN' : 'PLAY AGAIN'}</span>
           </button>
 
-          <button onClick={handleLobbyRedirect} className="pointer-events-auto flex items-center justify-center gap-3 w-56 py-4 rounded-full transition-all hover:scale-105 shadow-[0_5px_20px_rgba(0,0,0,0.6)] group border border-[#ffe58f]" style={{
+          <button onClick={handleLobbyRedirect} className="pointer-events-auto flex items-center justify-center gap-3 w-full md:w-56 py-4 rounded-full transition-all hover:scale-105 shadow-[0_5px_20px_rgba(0,0,0,0.6)] group border border-[#ffe58f]" style={{
             background: 'linear-gradient(180deg, #d4af37 0%, #b8860b 40%, #8a6b20 100%)',
             boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 5px 20px rgba(0,0,0,0.8)'
           }}>
             <Home size={18} className="text-black" />
-            <span className="text-black text-[14px] font-black uppercase tracking-[0.2em] drop-shadow-sm">RETURN TO LOBBY</span>
+            <span className="text-black text-[13px] sm:text-[14px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] drop-shadow-sm">RETURN TO LOBBY</span>
           </button>
 
-          <button onClick={() => { playClick(); setShowScoreboard(true); }} className="pointer-events-auto flex items-center justify-center gap-3 w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group">
+          <button onClick={() => { playClick(); setShowScoreboard(true); }} className="pointer-events-auto flex items-center justify-center gap-3 w-full md:w-48 py-3.5 rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-[#334155] hover:border-[#475569] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] group">
             <BarChart2 size={16} className="text-slate-400" />
-            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">VIEW SCOREBOARD</span>
+            <span className="text-slate-300 text-sm font-bold uppercase tracking-widest">SCOREBOARD</span>
           </button>
         </div>
       </div>

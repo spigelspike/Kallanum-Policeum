@@ -135,7 +135,7 @@ export default function DiscussionPhase() {
     if (botAccusationTriggered.current) return
 
     // Accuse at 3 seconds remaining in the grace period
-    if (graceTimeLeft === 3) {
+    if (graceTimeLeft <= 3) {
       botAccusationTriggered.current = true
       const nonPolicePlayers = players.filter(p => p.id !== policeId)
       if (nonPolicePlayers.length === 0) return
