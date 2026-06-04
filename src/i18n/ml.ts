@@ -99,6 +99,7 @@ export const ml: typeof en = {
     confirmAccusation: "തിരഞ്ഞെടുക്കുക",
     submittingAccusation: "അയക്കുന്നു...",
     tapToAccuse: "കള്ളനെ തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യുക...",
+    tapAPlayer: "ഒരു കളിക്കാരനെ ടാപ്പ് ചെയ്യുക",
     roundResult: "റൗണ്ട് {{round}} ഫലം",
     thiefCaught: "കള്ളനെ പിടിച്ചു!",
     correctlyAccused: "{{police}} ശരിയായി {{accused}}-നെ കണ്ടുപിടിച്ചു",

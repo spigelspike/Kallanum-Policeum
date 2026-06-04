@@ -97,6 +97,7 @@ export const en = {
     confirmAccusation: "Confirm Accusation",
     submittingAccusation: "Submitting...",
     tapToAccuse: "Tap a player on the table to accuse them...",
+    tapAPlayer: "Tap a player on the table",
     roundResult: "Round {{round}} Result",
     thiefCaught: "Thief Caught!",
     correctlyAccused: "{{police}} correctly accused {{accused}}",
