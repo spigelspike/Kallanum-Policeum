@@ -12,6 +12,9 @@ const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
 // Map to track timeouts for the speaking indicator debounce
 const speakingTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
 
+// Track generation of joins to prevent strict-mode race conditions with singleton client
+let globalJoinCount = 0;
+
 const getNumericUid = (id: string) => {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -57,6 +60,7 @@ export default function AgoraVoiceManager() {
     let active = true
     let micTrack: any | null = null
     const numericUid = getNumericUid(myPlayerId)
+    const myJoinId = ++globalJoinCount;
 
     const getAgoraToken = async (rCode: string, uId: number) => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -108,7 +112,7 @@ export default function AgoraVoiceManager() {
 
         if (!active) {
           micTrack.close()
-          await client.leave()
+          if (myJoinId === globalJoinCount) await client.leave()
           return
         }
 
@@ -147,10 +151,12 @@ export default function AgoraVoiceManager() {
           } catch (e) {}
           micTrack.close()
         }
-        try {
-          console.log("[Agora] Leaving channel...")
-          await client.leave()
-        } catch (e) {}
+        if (myJoinId === globalJoinCount) {
+          try {
+            console.log("[Agora] Leaving channel...")
+            await client.leave()
+          } catch (e) {}
+        }
       }
       cleanup()
     }
@@ -239,14 +245,14 @@ export default function AgoraVoiceManager() {
       if (user.audioTrack) {
         let pId: string | undefined
         // Reverse lookup: find which player ID matches this numeric UID
-        const matchedPlayer = playersRef.current.find(p => getNumericUid(p.id) === user.uid)
+        const matchedPlayer = players.find(p => getNumericUid(p.id) === user.uid)
         if (matchedPlayer) {
           pId = matchedPlayer.id
         }
 
         if (pId) {
           const isLocallyMuted = localMutedMap[pId]
-          if (isLocallyMuted || isDeafenedRef.current) {
+          if (isLocallyMuted || isDeafened) {
             user.audioTrack.setVolume(0)
           } else {
             const vol = localVolumeMap[pId] ?? 100
@@ -255,7 +261,7 @@ export default function AgoraVoiceManager() {
         }
       }
     })
-  }, [localVolumeMap, localMutedMap, remoteUsers])
+  }, [localVolumeMap, localMutedMap, remoteUsers, isDeafened, players])
 
   // Set up volume indicators to power the glowing green rings around avatars!
   useEffect(() => {
