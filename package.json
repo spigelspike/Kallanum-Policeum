@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
     "@tailwindcss/vite": "^4.3.0",
+    "@vercel/analytics": "^2.0.1",
     "ably": "^2.21.0",
     "agora-rtc-react": "^2.5.1",
     "agora-rtc-sdk-ng": "^4.24.3",
